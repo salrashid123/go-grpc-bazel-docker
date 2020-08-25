@@ -1,4 +1,4 @@
-# go with bazel with grpc with docker
+# go with bazel with grpc with container
 
 Deterministic container images for gRPC+golang [bazel](https://bazel.build/).
 
@@ -19,11 +19,11 @@ To run this sample, you will need `bazel` installed
 ### Build Image
 
 ```bash
-bazel build  --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 examples/greeter_server:all
-bazel build  --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 examples/greeter_client:all
+bazel build  --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_server:all
+bazel build  --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_client:all
 
-bazel run  --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 examples/greeter_client:greeter_client_image
-bazel run  --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 examples/greeter_server:greeter_server_image
+bazel run  --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_client:greeter_client_image
+bazel run  --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_server:greeter_server_image
 ```
 
 ### Check Image
@@ -38,12 +38,12 @@ bazel/examples/greeter_server                    greeter_server_image   409954cc
 Notice the image hash values,...these wil be the same no matter where you generate the images
 
 ```yaml
-$ docker inspect bazel/examples/greeter_client:greeter_client_image
+$ docker inspect bazel/greeter_client:greeter_client_image
 [
     {
-        "Id": "sha256:a634c1e4b528d66a57dc3ee2c30ca80750b66e7632f31958fd1f6b27937083b4",
+        "Id": "sha256:c9197e9819cdac12a89abcd1158b0bdf78a1d23d50796e4c73d6530079133606",
         "RepoTags": [
-            "bazel/examples/greeter_client:greeter_client_image"
+            "bazel/greeter_client:greeter_client_image"
         ],
         "RepoDigests": [],
         "Parent": "",
@@ -99,14 +99,14 @@ $ docker inspect bazel/examples/greeter_client:greeter_client_image
         },
         "Architecture": "amd64",
         "Os": "linux",
-        "Size": 15759905,
-        "VirtualSize": 15759905,
+        "Size": 15759806,
+        "VirtualSize": 15759806,
         "GraphDriver": {
             "Data": {
                 "LowerDir": "/var/lib/docker/overlay2/066c5b6ddf94a3b31f953b94453f43d5884afa06e2d8bd15a9d073685556c9e4/diff",
-                "MergedDir": "/var/lib/docker/overlay2/64c753186f7206dd28f2eeaa8d32bf66230effa7901f1591d894588d12e51022/merged",
-                "UpperDir": "/var/lib/docker/overlay2/64c753186f7206dd28f2eeaa8d32bf66230effa7901f1591d894588d12e51022/diff",
-                "WorkDir": "/var/lib/docker/overlay2/64c753186f7206dd28f2eeaa8d32bf66230effa7901f1591d894588d12e51022/work"
+                "MergedDir": "/var/lib/docker/overlay2/1bf40026b95985b478ecf35a15e9a01678fefd4acc180b722b9682430f370443/merged",
+                "UpperDir": "/var/lib/docker/overlay2/1bf40026b95985b478ecf35a15e9a01678fefd4acc180b722b9682430f370443/diff",
+                "WorkDir": "/var/lib/docker/overlay2/1bf40026b95985b478ecf35a15e9a01678fefd4acc180b722b9682430f370443/work"
             },
             "Name": "overlay2"
         },
@@ -114,11 +114,11 @@ $ docker inspect bazel/examples/greeter_client:greeter_client_image
             "Type": "layers",
             "Layers": [
                 "sha256:7444ea29e45e927abea1f923bf24cac20deaddea603c4bb1c7f2f5819773d453",
-                "sha256:db047417f3aabafd9ff4e347aea4c113adf6be679601510c294ca0a3141b74db"
+                "sha256:abd61d679f7f6dfe3426e1a652427082e392715ed9683e0d7f84b472e462f104"
             ]
         },
         "Metadata": {
-            "LastTagTime": "2020-08-24T15:15:48.872078308-04:00"
+            "LastTagTime": "2020-08-24T20:09:51.803295418-04:00"
         }
     }
 ]
@@ -126,11 +126,135 @@ $ docker inspect bazel/examples/greeter_client:greeter_client_image
 
 ### (optional) gRPC Client/Server
 ```
-docker run -p 50051:50051 bazel/examples/greeter_server:greeter_server_image
-docker run --net=host bazel/examples/greeter_client:greeter_client_image
+docker run -p 50051:50051 bazel/greeter_server:greeter_server_image
+docker run --net=host bazel/greeter_client:greeter_client_image
+```
+
+### Specify docker image
+
+You can specify a repo prefix by setting the `repository` command here. In the case below, its on dockerhub as handle `salrashid123`
+
+```bazel
+container_image(
+    name = "greeter_server_image",
+    base = "@alpine_linux_amd64//image",
+    entrypoint = ["/server"],
+    files = [":server"],
+    repository = "salrashid123"
+)
+```
+
+```bash
+$ docker inspect bazel/greeter_client:greeter_client_image
+[
+    {
+        "Id": "sha256:c9197e9819cdac12a89abcd1158b0bdf78a1d23d50796e4c73d6530079133606",
+        "RepoTags": [
+            "bazel/greeter_client:greeter_client_image",
+            "salrashid123/greeter_client:greeter_client_image"
+        ],
+        "RepoDigests": [],
+        "Parent": "",
+        "Comment": "",
+        "Created": "1970-01-01T00:00:00Z",
+        "Container": "e61c47f59d8323f7c6db62b1c47bb70faf0d8604756b85e9eb0cd329e88872d8",
+
+```
+
+on push to dockerhub
+
+- `Client`
+```bash
+$ docker push salrashid123/greeter_client:greeter_client_image
+    The push refers to repository [docker.io/salrashid123/greeter_client]
+    greeter_client_image: digest: sha256:55746694a16db7a2036984088b3198ffae3ad9d90f7f05208c3c5d6b9e64a633 size: 738
+
+$ docker inspect bazel/greeter_client:greeter_client_image
+[
+    {
+        "Id": "sha256:c9197e9819cdac12a89abcd1158b0bdf78a1d23d50796e4c73d6530079133606",
+        "RepoTags": [
+            "bazel/greeter_client:greeter_client_image",
+            "salrashid123/greeter_client:greeter_client_image"
+        ],
+        "RepoDigests": [
+            "salrashid123/greeter_client@sha256:55746694a16db7a2036984088b3198ffae3ad9d90f7f05208c3c5d6b9e64a633"
+        ],
+        "Parent": "",
+        "Comment": "",
+        "Created": "1970-01-01T00:00:00Z",
+        "Container": "e61c47f59d8323f7c6db62b1c47bb70faf0d8604756b85e9eb0cd329e88872d8",
+```
+
+- `Server`
+```bash
+$  docker push salrashid123/greeter_server:greeter_server_image
+    The push refers to repository [docker.io/salrashid123/greeter_server]
+    greeter_server_image: digest: sha256:ccd3f4776ff236f7455281c74da39c2d5d9cdc5a9ad31f75b2bc38773539fef3 size: 738
+
+$ docker inspect bazel/greeter_server:greeter_server_image
+[
+    {
+        "Id": "sha256:b26b67e46ab3732c542b93b3988cd4419cc3e9d137b85654b9b64117f4fe8e43",
+        "RepoTags": [
+            "bazel/greeter_server:greeter_server_image",
+            "salrashid123/greeter_server:greeter_server_image"
+        ],
+        "RepoDigests": [
+            "salrashid123/greeter_server@sha256:ccd3f4776ff236f7455281c74da39c2d5d9cdc5a9ad31f75b2bc38773539fef3"
+        ],
+        "Parent": "",
+        "Comment": "",
+        "Created": "1970-01-01T00:00:00Z",
+        "Container": "e61c47f59d8323f7c6db62b1c47bb70faf0d8604756b85e9eb0cd329e88872d8",    
+```
+
+### Cloud BUild
+
+You can use Cloud Build to create the image by using the `bazel` builder and specifying the repository path to export to.  In the sample below, the repository is set o google container registry:
+
+```
+container_image(
+    name = "greeter_server_image",
+    base = "@alpine_linux_amd64//image",
+    entrypoint = ["/server"],
+    files = [":server"],
+    repository = "gcr.io/mineral-minutia-820"
+)
+```
+
+```bash
+$ gcloud builds submit --config=cloudbuild.yaml --machine-type=n1-highcpu-32
+
+The push refers to repository [gcr.io/mineral-minutia-820/greeter_server]
+b59e6addd032: Preparing
+7444ea29e45e: Preparing
+7444ea29e45e: Pushed
+b59e6addd032: Pushed
+greeter_server_image: digest: sha256:ccd3f4776ff236f7455281c74da39c2d5d9cdc5a9ad31f75b2bc38773539fef3 size: 738
+DONE
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+ID                                    CREATE_TIME                DURATION  SOURCE                                                                                             IMAGES                                                          STATUS
+d3ec4b0c-3135-4d2e-ac58-3a34d8d8a5e6  2020-08-25T00:41:50+00:00  1M51S     gs://mineral-minutia-820_cloudbuild/source/1598316109.957319-67b9f7f8148d496287bfecb45a09fa97.tgz  gcr.io/mineral-minutia-820/greeter_server:greeter_server_image  SUCCESS
+```
+```bash
+$ docker inspect bazel/greeter_server:greeter_server_image
+[
+    {
+        "Id": "sha256:b26b67e46ab3732c542b93b3988cd4419cc3e9d137b85654b9b64117f4fe8e43",
+        "RepoTags": [
+            "bazel/greeter_server:greeter_server_image",
+            "salrashid123/greeter_server:greeter_server_image",
+            "gcr.io/mineral-minutia-820/greeter_server:greeter_server_image"
+        ],
+        "RepoDigests": [
+            "salrashid123/greeter_server@sha256:ccd3f4776ff236f7455281c74da39c2d5d9cdc5a9ad31f75b2bc38773539fef3",
+            "gcr.io/mineral-minutia-820/greeter_server@sha256:ccd3f4776ff236f7455281c74da39c2d5d9cdc5a9ad31f75b2bc38773539fef3"
+        ],
+
 ```
 
 ### TODO:
 
 - use `gazelle` for dependencies `bazel run //:gazelle -- update-repos -from_file=examples/greeter_server/go.mod`
-- Setup Bazel with [Google Cloud Build](https://cloud.google.com/cloud-build/docs/cloud-builders)
