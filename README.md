@@ -20,10 +20,10 @@ To run this sample, you will need `bazel` installed
 
 ```bash
 bazel build  --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_server:all
-bazel build  --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_client:all
-
-bazel run  --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_client:greeter_client_image
 bazel run  --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_server:greeter_server_image
+
+bazel build  --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_client:all
+bazel run  --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_client:greeter_client_image
 ```
 
 ### Check Image
@@ -35,15 +35,15 @@ bazel/examples/greeter_client                    greeter_client_image   a634c1e4
 bazel/examples/greeter_server                    greeter_server_image   409954cce6b1        50 years ago        16MB
 ```
 
-Notice the image hash values,...these wil be the same no matter where you generate the images
+Inspect the image thats generated...these wil be the same no matter where you generate the images
 
 ```yaml
-$ docker inspect bazel/greeter_client:greeter_client_image
+$ docker inspect bazel/greeter_server:greeter_server_image
 [
     {
-        "Id": "sha256:c9197e9819cdac12a89abcd1158b0bdf78a1d23d50796e4c73d6530079133606",
+        "Id": "sha256:b26b67e46ab3732c542b93b3988cd4419cc3e9d137b85654b9b64117f4fe8e43",
         "RepoTags": [
-            "bazel/greeter_client:greeter_client_image"
+            "bazel/greeter_server:greeter_server_image"
         ],
         "RepoDigests": [],
         "Parent": "",
@@ -92,21 +92,21 @@ $ docker inspect bazel/greeter_client:greeter_client_image
             "Volumes": null,
             "WorkingDir": "",
             "Entrypoint": [
-                "/client"
+                "/server"
             ],
             "OnBuild": null,
             "Labels": null
         },
         "Architecture": "amd64",
         "Os": "linux",
-        "Size": 15759806,
-        "VirtualSize": 15759806,
+        "Size": 16007271,
+        "VirtualSize": 16007271,
         "GraphDriver": {
             "Data": {
                 "LowerDir": "/var/lib/docker/overlay2/066c5b6ddf94a3b31f953b94453f43d5884afa06e2d8bd15a9d073685556c9e4/diff",
-                "MergedDir": "/var/lib/docker/overlay2/1bf40026b95985b478ecf35a15e9a01678fefd4acc180b722b9682430f370443/merged",
-                "UpperDir": "/var/lib/docker/overlay2/1bf40026b95985b478ecf35a15e9a01678fefd4acc180b722b9682430f370443/diff",
-                "WorkDir": "/var/lib/docker/overlay2/1bf40026b95985b478ecf35a15e9a01678fefd4acc180b722b9682430f370443/work"
+                "MergedDir": "/var/lib/docker/overlay2/3a7186980e4c73f9d5d03306890d072375877df5d9ab3ecec1f62f409ca2e364/merged",
+                "UpperDir": "/var/lib/docker/overlay2/3a7186980e4c73f9d5d03306890d072375877df5d9ab3ecec1f62f409ca2e364/diff",
+                "WorkDir": "/var/lib/docker/overlay2/3a7186980e4c73f9d5d03306890d072375877df5d9ab3ecec1f62f409ca2e364/work"
             },
             "Name": "overlay2"
         },
@@ -114,17 +114,19 @@ $ docker inspect bazel/greeter_client:greeter_client_image
             "Type": "layers",
             "Layers": [
                 "sha256:7444ea29e45e927abea1f923bf24cac20deaddea603c4bb1c7f2f5819773d453",
-                "sha256:abd61d679f7f6dfe3426e1a652427082e392715ed9683e0d7f84b472e462f104"
+                "sha256:b59e6addd032a4e64c7a911245e7223688a0801b09bf41d3ff2979a4c0ad9249"
             ]
         },
         "Metadata": {
-            "LastTagTime": "2020-08-24T20:09:51.803295418-04:00"
+            "LastTagTime": "2020-08-24T21:56:21.290812717-04:00"
         }
     }
 ]
 ```
 
 ### (optional) gRPC Client/Server
+
+(why not?)
 ```
 docker run -p 50051:50051 bazel/greeter_server:greeter_server_image
 docker run --net=host bazel/greeter_client:greeter_client_image
@@ -144,69 +146,193 @@ container_image(
 )
 ```
 
-```bash
-$ docker inspect bazel/greeter_client:greeter_client_image
-[
-    {
-        "Id": "sha256:c9197e9819cdac12a89abcd1158b0bdf78a1d23d50796e4c73d6530079133606",
-        "RepoTags": [
-            "bazel/greeter_client:greeter_client_image",
-            "salrashid123/greeter_client:greeter_client_image"
-        ],
-        "RepoDigests": [],
-        "Parent": "",
-        "Comment": "",
-        "Created": "1970-01-01T00:00:00Z",
-        "Container": "e61c47f59d8323f7c6db62b1c47bb70faf0d8604756b85e9eb0cd329e88872d8",
-
-```
-
 on push to dockerhub
 
 - `Client`
 ```bash
-$ docker push salrashid123/greeter_client:greeter_client_image
-    The push refers to repository [docker.io/salrashid123/greeter_client]
-    greeter_client_image: digest: sha256:55746694a16db7a2036984088b3198ffae3ad9d90f7f05208c3c5d6b9e64a633 size: 738
-
-$ docker inspect bazel/greeter_client:greeter_client_image
-[
-    {
-        "Id": "sha256:c9197e9819cdac12a89abcd1158b0bdf78a1d23d50796e4c73d6530079133606",
-        "RepoTags": [
-            "bazel/greeter_client:greeter_client_image",
-            "salrashid123/greeter_client:greeter_client_image"
-        ],
-        "RepoDigests": [
-            "salrashid123/greeter_client@sha256:55746694a16db7a2036984088b3198ffae3ad9d90f7f05208c3c5d6b9e64a633"
-        ],
-        "Parent": "",
-        "Comment": "",
-        "Created": "1970-01-01T00:00:00Z",
-        "Container": "e61c47f59d8323f7c6db62b1c47bb70faf0d8604756b85e9eb0cd329e88872d8",
-```
-
-- `Server`
-```bash
-$  docker push salrashid123/greeter_server:greeter_server_image
+$ docker push salrashid123/greeter_server:greeter_server_image
     The push refers to repository [docker.io/salrashid123/greeter_server]
     greeter_server_image: digest: sha256:ccd3f4776ff236f7455281c74da39c2d5d9cdc5a9ad31f75b2bc38773539fef3 size: 738
 
-$ docker inspect bazel/greeter_server:greeter_server_image
+```
+
+On any other machine pull the image and inspect
+
+```bash
+$ docker inspect salrashid123/greeter_server@sha256:ccd3f4776ff236f7455281c74da39c2d5d9cdc5a9ad31f75b2bc38773539fef3
 [
     {
         "Id": "sha256:b26b67e46ab3732c542b93b3988cd4419cc3e9d137b85654b9b64117f4fe8e43",
-        "RepoTags": [
-            "bazel/greeter_server:greeter_server_image",
-            "salrashid123/greeter_server:greeter_server_image"
-        ],
+        "RepoTags": [],
         "RepoDigests": [
             "salrashid123/greeter_server@sha256:ccd3f4776ff236f7455281c74da39c2d5d9cdc5a9ad31f75b2bc38773539fef3"
         ],
         "Parent": "",
         "Comment": "",
         "Created": "1970-01-01T00:00:00Z",
-        "Container": "e61c47f59d8323f7c6db62b1c47bb70faf0d8604756b85e9eb0cd329e88872d8",    
+        "Container": "e61c47f59d8323f7c6db62b1c47bb70faf0d8604756b85e9eb0cd329e88872d8",
+        "ContainerConfig": {
+            "Hostname": "",
+            "Domainname": "",
+            "User": "",
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "AttachStderr": false,
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": null,
+            "Cmd": null,
+            "Image": "",
+            "Volumes": null,
+            "WorkingDir": "",
+            "Entrypoint": null,
+            "OnBuild": null,
+            "Labels": null
+        },
+        "DockerVersion": "18.06.1-ce",
+        "Author": "Bazel",
+        "Config": {
+            "Hostname": "",
+            "Domainname": "",
+            "User": "",
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "AttachStderr": false,
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            ],
+            "Cmd": [
+                "/bin/sh"
+            ],
+            "ArgsEscaped": true,
+            "Image": "sha256:197f4c09efde086f81e43b032e2677e02fa70ef01296ed28cdc69d1c5f8405b5",
+            "Volumes": null,
+            "WorkingDir": "",
+            "Entrypoint": [
+                "/server"
+            ],
+            "OnBuild": null,
+            "Labels": null
+        },
+        "Architecture": "amd64",
+        "Os": "linux",
+        "Size": 16007271,
+        "VirtualSize": 16007271,
+        "GraphDriver": {
+            "Data": {
+                "LowerDir": "/var/lib/docker/overlay2/1d9724dbeea1229a89f0575c2480f00f3f8b3e89c1f3cf6630885c2e4a42150c/diff",
+                "MergedDir": "/var/lib/docker/overlay2/0cffcb06cf73b0c05999f87f1208ed947271c5b46ec4076f5533e15ca6934d9d/merged",
+                "UpperDir": "/var/lib/docker/overlay2/0cffcb06cf73b0c05999f87f1208ed947271c5b46ec4076f5533e15ca6934d9d/diff",
+                "WorkDir": "/var/lib/docker/overlay2/0cffcb06cf73b0c05999f87f1208ed947271c5b46ec4076f5533e15ca6934d9d/work"
+            },
+            "Name": "overlay2"
+        },
+        "RootFS": {
+            "Type": "layers",
+            "Layers": [
+                "sha256:7444ea29e45e927abea1f923bf24cac20deaddea603c4bb1c7f2f5819773d453",
+                "sha256:b59e6addd032a4e64c7a911245e7223688a0801b09bf41d3ff2979a4c0ad9249"
+            ]
+        },
+        "Metadata": {
+            "LastTagTime": "0001-01-01T00:00:00Z"
+        }
+    }
+]
+```
+
+Or just build the image there using bazel from scratch and compare
+
+```bash
+ docker inspect salrashid123/greeter_server:greeter_server_image
+[
+    {
+        "Id": "sha256:b26b67e46ab3732c542b93b3988cd4419cc3e9d137b85654b9b64117f4fe8e43",
+        "RepoTags": [
+            "salrashid123/greeter_server:greeter_server_image"
+        ],
+        "RepoDigests": [],
+        "Parent": "",
+        "Comment": "",
+        "Created": "1970-01-01T00:00:00Z",
+        "Container": "e61c47f59d8323f7c6db62b1c47bb70faf0d8604756b85e9eb0cd329e88872d8",
+        "ContainerConfig": {
+            "Hostname": "",
+            "Domainname": "",
+            "User": "",
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "AttachStderr": false,
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": null,
+            "Cmd": null,
+            "Image": "",
+            "Volumes": null,
+            "WorkingDir": "",
+            "Entrypoint": null,
+            "OnBuild": null,
+            "Labels": null
+        },
+        "DockerVersion": "18.06.1-ce",
+        "Author": "Bazel",
+        "Config": {
+            "Hostname": "",
+            "Domainname": "",
+            "User": "",
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "AttachStderr": false,
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            ],
+            "Cmd": [
+                "/bin/sh"
+            ],
+            "ArgsEscaped": true,
+            "Image": "sha256:197f4c09efde086f81e43b032e2677e02fa70ef01296ed28cdc69d1c5f8405b5",
+            "Volumes": null,
+            "WorkingDir": "",
+            "Entrypoint": [
+                "/server"
+            ],
+            "OnBuild": null,
+            "Labels": null
+        },
+        "Architecture": "amd64",
+        "Os": "linux",
+        "Size": 16007271,
+        "VirtualSize": 16007271,
+        "GraphDriver": {
+            "Data": {
+                "LowerDir": "/var/lib/docker/overlay2/1d9724dbeea1229a89f0575c2480f00f3f8b3e89c1f3cf6630885c2e4a42150c/diff",
+                "MergedDir": "/var/lib/docker/overlay2/59e0d43e151dd218f0155ccd046eb90876f67d82e81cd24e26414fe2defc5070/merged",
+                "UpperDir": "/var/lib/docker/overlay2/59e0d43e151dd218f0155ccd046eb90876f67d82e81cd24e26414fe2defc5070/diff",
+                "WorkDir": "/var/lib/docker/overlay2/59e0d43e151dd218f0155ccd046eb90876f67d82e81cd24e26414fe2defc5070/work"
+            },
+            "Name": "overlay2"
+        },
+        "RootFS": {
+            "Type": "layers",
+            "Layers": [
+                "sha256:7444ea29e45e927abea1f923bf24cac20deaddea603c4bb1c7f2f5819773d453",
+                "sha256:b59e6addd032a4e64c7a911245e7223688a0801b09bf41d3ff2979a4c0ad9249"
+            ]
+        },
+        "Metadata": {
+            "LastTagTime": "2020-08-25T02:07:05.265400108Z"
+        }
+    }
+]
+
 ```
 
 ### Cloud BUild
