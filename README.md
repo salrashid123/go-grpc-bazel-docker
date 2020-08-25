@@ -1,4 +1,4 @@
-# go with bazel with grpc with container
+# Deterministic builds with go + bazel + grpc + docker
 
 Deterministic container images for gRPC+golang [bazel](https://bazel.build/).
 
