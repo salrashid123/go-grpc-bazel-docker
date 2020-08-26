@@ -31,8 +31,8 @@ bazel run  --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_clie
 ```bash
 $ docker images 
 REPOSITORY                                       TAG                    IMAGE ID            CREATED             SIZE
-bazel/examples/greeter_client                    greeter_client_image   a634c1e4b528        50 years ago        15.8MB
-bazel/examples/greeter_server                    greeter_server_image   409954cce6b1        50 years ago        16MB
+bazel/greeter_client   greeter_client_image   0c4a07ae6d50        50 years ago        15.7MB
+bazel/greeter_server   greeter_server_image   7ea0fc3e14c0        50 years ago        16MB
 ```
 
 Inspect the image thats generated...these wil be the same no matter where you generate the images
@@ -41,7 +41,7 @@ Inspect the image thats generated...these wil be the same no matter where you ge
 $ docker inspect bazel/greeter_server:greeter_server_image
 [
     {
-        "Id": "sha256:b26b67e46ab3732c542b93b3988cd4419cc3e9d137b85654b9b64117f4fe8e43",
+        "Id": "sha256:7ea0fc3e14c0d0cfdd8048f5ddd19566a1b78f822658b8c5318c14241340a982",
         "RepoTags": [
             "bazel/greeter_server:greeter_server_image"
         ],
@@ -49,7 +49,7 @@ $ docker inspect bazel/greeter_server:greeter_server_image
         "Parent": "",
         "Comment": "",
         "Created": "1970-01-01T00:00:00Z",
-        "Container": "e61c47f59d8323f7c6db62b1c47bb70faf0d8604756b85e9eb0cd329e88872d8",
+        "Container": "f382632c7b88c2348c28b8754b3aeb69f3c69448d48a7c8e27675abd309a04cf",
         "ContainerConfig": {
             "Hostname": "",
             "Domainname": "",
@@ -88,7 +88,7 @@ $ docker inspect bazel/greeter_server:greeter_server_image
                 "/bin/sh"
             ],
             "ArgsEscaped": true,
-            "Image": "sha256:197f4c09efde086f81e43b032e2677e02fa70ef01296ed28cdc69d1c5f8405b5",
+            "Image": "sha256:57e798527dbcbda6abbc2214fe12346873f25ba65c6ced0a65a149b316a3e9a1",
             "Volumes": null,
             "WorkingDir": "",
             "Entrypoint": [
@@ -99,26 +99,26 @@ $ docker inspect bazel/greeter_server:greeter_server_image
         },
         "Architecture": "amd64",
         "Os": "linux",
-        "Size": 16007271,
-        "VirtualSize": 16007271,
+        "Size": 15971699,
+        "VirtualSize": 15971699,
         "GraphDriver": {
             "Data": {
-                "LowerDir": "/var/lib/docker/overlay2/066c5b6ddf94a3b31f953b94453f43d5884afa06e2d8bd15a9d073685556c9e4/diff",
-                "MergedDir": "/var/lib/docker/overlay2/3a7186980e4c73f9d5d03306890d072375877df5d9ab3ecec1f62f409ca2e364/merged",
-                "UpperDir": "/var/lib/docker/overlay2/3a7186980e4c73f9d5d03306890d072375877df5d9ab3ecec1f62f409ca2e364/diff",
-                "WorkDir": "/var/lib/docker/overlay2/3a7186980e4c73f9d5d03306890d072375877df5d9ab3ecec1f62f409ca2e364/work"
+                "LowerDir": "/var/lib/docker/overlay2/567091aeb276db80ba6894ced4fe82b4761108a9e0433b1cca470c85686bd194/diff",
+                "MergedDir": "/var/lib/docker/overlay2/c610376ebfd59f918f445ea74b2dde32b584a34fdf5a506b3845d2c47e069c52/merged",
+                "UpperDir": "/var/lib/docker/overlay2/c610376ebfd59f918f445ea74b2dde32b584a34fdf5a506b3845d2c47e069c52/diff",
+                "WorkDir": "/var/lib/docker/overlay2/c610376ebfd59f918f445ea74b2dde32b584a34fdf5a506b3845d2c47e069c52/work"
             },
             "Name": "overlay2"
         },
         "RootFS": {
             "Type": "layers",
             "Layers": [
-                "sha256:7444ea29e45e927abea1f923bf24cac20deaddea603c4bb1c7f2f5819773d453",
+                "sha256:a1852e9ff2e7cb61bd911cb964ae939e95621121a53b1e5af7c2cb341cd04283",
                 "sha256:b59e6addd032a4e64c7a911245e7223688a0801b09bf41d3ff2979a4c0ad9249"
             ]
         },
         "Metadata": {
-            "LastTagTime": "2020-08-24T21:56:21.290812717-04:00"
+            "LastTagTime": "2020-08-25T20:21:43.247318778-04:00"
         }
     }
 ]
@@ -151,189 +151,29 @@ on push to dockerhub
 - `Client`
 ```bash
 $ docker push salrashid123/greeter_server:greeter_server_image
-    The push refers to repository [docker.io/salrashid123/greeter_server]
-    greeter_server_image: digest: sha256:ccd3f4776ff236f7455281c74da39c2d5d9cdc5a9ad31f75b2bc38773539fef3 size: 738
+    a1852e9ff2e7: Pushed 
+    greeter_server_image: digest: sha256:e3e95e8f07b552ee2f60aaf6308b75ee660e24ff58d3a2b25be26f53476cde87 size: 738
 
 ```
 
 On any other machine pull the image and inspect
 
 ```bash
-$ docker inspect salrashid123/greeter_server@sha256:ccd3f4776ff236f7455281c74da39c2d5d9cdc5a9ad31f75b2bc38773539fef3
+$ docker inspect salrashid123/greeter_server@sha256:e3e95e8f07b552ee2f60aaf6308b75ee660e24ff58d3a2b25be26f53476cde87
 [
     {
-        "Id": "sha256:b26b67e46ab3732c542b93b3988cd4419cc3e9d137b85654b9b64117f4fe8e43",
-        "RepoTags": [],
-        "RepoDigests": [
-            "salrashid123/greeter_server@sha256:ccd3f4776ff236f7455281c74da39c2d5d9cdc5a9ad31f75b2bc38773539fef3"
-        ],
-        "Parent": "",
-        "Comment": "",
-        "Created": "1970-01-01T00:00:00Z",
-        "Container": "e61c47f59d8323f7c6db62b1c47bb70faf0d8604756b85e9eb0cd329e88872d8",
-        "ContainerConfig": {
-            "Hostname": "",
-            "Domainname": "",
-            "User": "",
-            "AttachStdin": false,
-            "AttachStdout": false,
-            "AttachStderr": false,
-            "Tty": false,
-            "OpenStdin": false,
-            "StdinOnce": false,
-            "Env": null,
-            "Cmd": null,
-            "Image": "",
-            "Volumes": null,
-            "WorkingDir": "",
-            "Entrypoint": null,
-            "OnBuild": null,
-            "Labels": null
-        },
-        "DockerVersion": "18.06.1-ce",
-        "Author": "Bazel",
-        "Config": {
-            "Hostname": "",
-            "Domainname": "",
-            "User": "",
-            "AttachStdin": false,
-            "AttachStdout": false,
-            "AttachStderr": false,
-            "Tty": false,
-            "OpenStdin": false,
-            "StdinOnce": false,
-            "Env": [
-                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-            ],
-            "Cmd": [
-                "/bin/sh"
-            ],
-            "ArgsEscaped": true,
-            "Image": "sha256:197f4c09efde086f81e43b032e2677e02fa70ef01296ed28cdc69d1c5f8405b5",
-            "Volumes": null,
-            "WorkingDir": "",
-            "Entrypoint": [
-                "/server"
-            ],
-            "OnBuild": null,
-            "Labels": null
-        },
-        "Architecture": "amd64",
-        "Os": "linux",
-        "Size": 16007271,
-        "VirtualSize": 16007271,
-        "GraphDriver": {
-            "Data": {
-                "LowerDir": "/var/lib/docker/overlay2/1d9724dbeea1229a89f0575c2480f00f3f8b3e89c1f3cf6630885c2e4a42150c/diff",
-                "MergedDir": "/var/lib/docker/overlay2/0cffcb06cf73b0c05999f87f1208ed947271c5b46ec4076f5533e15ca6934d9d/merged",
-                "UpperDir": "/var/lib/docker/overlay2/0cffcb06cf73b0c05999f87f1208ed947271c5b46ec4076f5533e15ca6934d9d/diff",
-                "WorkDir": "/var/lib/docker/overlay2/0cffcb06cf73b0c05999f87f1208ed947271c5b46ec4076f5533e15ca6934d9d/work"
-            },
-            "Name": "overlay2"
-        },
-        "RootFS": {
-            "Type": "layers",
-            "Layers": [
-                "sha256:7444ea29e45e927abea1f923bf24cac20deaddea603c4bb1c7f2f5819773d453",
-                "sha256:b59e6addd032a4e64c7a911245e7223688a0801b09bf41d3ff2979a4c0ad9249"
-            ]
-        },
-        "Metadata": {
-            "LastTagTime": "0001-01-01T00:00:00Z"
-        }
-    }
-]
-```
-
-Or just build the image there using bazel from scratch and compare
-
-```bash
- docker inspect salrashid123/greeter_server:greeter_server_image
-[
-    {
-        "Id": "sha256:b26b67e46ab3732c542b93b3988cd4419cc3e9d137b85654b9b64117f4fe8e43",
+        "Id": "sha256:7ea0fc3e14c0d0cfdd8048f5ddd19566a1b78f822658b8c5318c14241340a982",
         "RepoTags": [
+            "bazel/greeter_server:greeter_server_image",
             "salrashid123/greeter_server:greeter_server_image"
         ],
-        "RepoDigests": [],
-        "Parent": "",
-        "Comment": "",
-        "Created": "1970-01-01T00:00:00Z",
-        "Container": "e61c47f59d8323f7c6db62b1c47bb70faf0d8604756b85e9eb0cd329e88872d8",
-        "ContainerConfig": {
-            "Hostname": "",
-            "Domainname": "",
-            "User": "",
-            "AttachStdin": false,
-            "AttachStdout": false,
-            "AttachStderr": false,
-            "Tty": false,
-            "OpenStdin": false,
-            "StdinOnce": false,
-            "Env": null,
-            "Cmd": null,
-            "Image": "",
-            "Volumes": null,
-            "WorkingDir": "",
-            "Entrypoint": null,
-            "OnBuild": null,
-            "Labels": null
-        },
-        "DockerVersion": "18.06.1-ce",
-        "Author": "Bazel",
-        "Config": {
-            "Hostname": "",
-            "Domainname": "",
-            "User": "",
-            "AttachStdin": false,
-            "AttachStdout": false,
-            "AttachStderr": false,
-            "Tty": false,
-            "OpenStdin": false,
-            "StdinOnce": false,
-            "Env": [
-                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-            ],
-            "Cmd": [
-                "/bin/sh"
-            ],
-            "ArgsEscaped": true,
-            "Image": "sha256:197f4c09efde086f81e43b032e2677e02fa70ef01296ed28cdc69d1c5f8405b5",
-            "Volumes": null,
-            "WorkingDir": "",
-            "Entrypoint": [
-                "/server"
-            ],
-            "OnBuild": null,
-            "Labels": null
-        },
-        "Architecture": "amd64",
-        "Os": "linux",
-        "Size": 16007271,
-        "VirtualSize": 16007271,
-        "GraphDriver": {
-            "Data": {
-                "LowerDir": "/var/lib/docker/overlay2/1d9724dbeea1229a89f0575c2480f00f3f8b3e89c1f3cf6630885c2e4a42150c/diff",
-                "MergedDir": "/var/lib/docker/overlay2/59e0d43e151dd218f0155ccd046eb90876f67d82e81cd24e26414fe2defc5070/merged",
-                "UpperDir": "/var/lib/docker/overlay2/59e0d43e151dd218f0155ccd046eb90876f67d82e81cd24e26414fe2defc5070/diff",
-                "WorkDir": "/var/lib/docker/overlay2/59e0d43e151dd218f0155ccd046eb90876f67d82e81cd24e26414fe2defc5070/work"
-            },
-            "Name": "overlay2"
-        },
-        "RootFS": {
-            "Type": "layers",
-            "Layers": [
-                "sha256:7444ea29e45e927abea1f923bf24cac20deaddea603c4bb1c7f2f5819773d453",
-                "sha256:b59e6addd032a4e64c7a911245e7223688a0801b09bf41d3ff2979a4c0ad9249"
-            ]
-        },
-        "Metadata": {
-            "LastTagTime": "2020-08-25T02:07:05.265400108Z"
-        }
-    }
-]
-
+        "RepoDigests": [
+            "salrashid123/greeter_server@sha256:e3e95e8f07b552ee2f60aaf6308b75ee660e24ff58d3a2b25be26f53476cde87"
+        ],
+   ...
 ```
+
+
 
 ### Cloud BUild
 
@@ -352,32 +192,29 @@ container_image(
 ```bash
 $ gcloud builds submit --config=cloudbuild.yaml --machine-type=n1-highcpu-32
 
-The push refers to repository [gcr.io/mineral-minutia-820/greeter_server]
-b59e6addd032: Preparing
-7444ea29e45e: Preparing
-7444ea29e45e: Pushed
-b59e6addd032: Pushed
-greeter_server_image: digest: sha256:ccd3f4776ff236f7455281c74da39c2d5d9cdc5a9ad31f75b2bc38773539fef3 size: 738
-DONE
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-ID                                    CREATE_TIME                DURATION  SOURCE                                                                                             IMAGES                                                          STATUS
-d3ec4b0c-3135-4d2e-ac58-3a34d8d8a5e6  2020-08-25T00:41:50+00:00  1M51S     gs://mineral-minutia-820_cloudbuild/source/1598316109.957319-67b9f7f8148d496287bfecb45a09fa97.tgz  gcr.io/mineral-minutia-820/greeter_server:greeter_server_image  SUCCESS
+    Loaded image ID: sha256:7ea0fc3e14c0d0cfdd8048f5ddd19566a1b78f822658b8c5318c14241340a982
+    Tagging 7ea0fc3e14c0d0cfdd8048f5ddd19566a1b78f822658b8c5318c14241340a982 as gcr.io/mineral-minutia-820/greeter_server:greeter_server_image
+    PUSH
+    Pushing gcr.io/mineral-minutia-820/greeter_server:greeter_server_image
+    The push refers to repository [gcr.io/mineral-minutia-820/greeter_server]
+    greeter_server_image: digest: sha256:e3e95e8f07b552ee2f60aaf6308b75ee660e24ff58d3a2b25be26f53476cde87 size: 738
+    DONE
 ```
+
+Then on the same system that it was built and pushed:
+
 ```bash
 $ docker inspect bazel/greeter_server:greeter_server_image
 [
     {
-        "Id": "sha256:b26b67e46ab3732c542b93b3988cd4419cc3e9d137b85654b9b64117f4fe8e43",
+        "Id": "sha256:7ea0fc3e14c0d0cfdd8048f5ddd19566a1b78f822658b8c5318c14241340a982",
         "RepoTags": [
             "bazel/greeter_server:greeter_server_image",
-            "salrashid123/greeter_server:greeter_server_image",
-            "gcr.io/mineral-minutia-820/greeter_server:greeter_server_image"
+            "salrashid123/greeter_server:greeter_server_image"
         ],
         "RepoDigests": [
-            "salrashid123/greeter_server@sha256:ccd3f4776ff236f7455281c74da39c2d5d9cdc5a9ad31f75b2bc38773539fef3",
-            "gcr.io/mineral-minutia-820/greeter_server@sha256:ccd3f4776ff236f7455281c74da39c2d5d9cdc5a9ad31f75b2bc38773539fef3"
-        ],
+            "salrashid123/greeter_server@sha256:e3e95e8f07b552ee2f60aaf6308b75ee660e24ff58d3a2b25be26f53476cde87"
+
 
 ```
 

@@ -102,6 +102,7 @@ container_pull(
     registry = "index.docker.io",
     repository = "library/alpine",
     tag = "3.8",
+    digest = "sha256:cf35b4fa14e23492df67af08ced54a15e68ad00cac545b437b1994340f20648c"
 )
 
 load(
