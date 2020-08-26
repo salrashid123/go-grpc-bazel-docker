@@ -26,6 +26,20 @@ bazel build  --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_cl
 bazel run  --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_client:greeter_client_image
 ```
 
+Note, the bazel base image specifies the image+hash so your'e starting off from a known state:
+
+- `WORKSPACE`
+
+```
+container_pull(
+    name = "alpine_linux_amd64",
+    registry = "index.docker.io",
+    repository = "library/alpine",
+    tag = "3.8",
+    digest = "sha256:cf35b4fa14e23492df67af08ced54a15e68ad00cac545b437b1994340f20648c"
+)
+```
+
 ### Check Image
 
 ```bash
