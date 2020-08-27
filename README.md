@@ -13,8 +13,19 @@ For reference, see:
 - [rules_docker](https://github.com/bazelbuild/rules_docker)
 
 
-To run this sample, you will need `bazel` installed
+To run this sample, you will need `bazel` installed (see [Cloud Shell](#cloud-shell) for an easy way to use `bazel`)
 
+### Cloud Shell
+
+If you have access to Google Cloud Platform account, you can use Cloud Shell to run `bazel` and save yourself an installation.
+
+```bash
+gcloud alpha cloud-shell ssh --boosted
+```
+
+Then within the shell, you should be able to `bazel version` to ensure it is installed.
+
+Cloud SDK (aka `gcloud`) permits
 
 ### Build Image
 
