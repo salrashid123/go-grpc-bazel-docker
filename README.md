@@ -234,11 +234,37 @@ $ docker inspect bazel/greeter_server:greeter_server_image
 
 ### Using Pregenerated protopb and gazelle
 
+`A)` Generate `proto.pb`:
+
 ```
-/usr/local/bin/protoc -I ./helloworld --include_imports --include_source_info --descriptor_set_out=helloworld/helloworld.proto.pb  --go_out=plugins=grpc:./helloworld/ helloworld/helloworld.proto
+/usr/local/bin/protoc -I ./helloworld \
+  --include_imports --include_source_info \
+  --descriptor_set_out=helloworld/helloworld.proto.pb \
+  --go_out=plugins=grpc:./helloworld/ helloworld/helloworld.proto
 ```
 
-then in `helloworld/BUILD.bazel
+`B)` comment the local `replace` directives in `go.mod`:
+
+```
+module main
+
+go 1.14
+
+require (
+	github.com/google/uuid v1.1.2 // indirect
+	golang.org/x/net v0.0.0-20200822124328-c89045814202 // indirect
+	google.golang.org/grpc v1.31.1 // indirect
+	google.golang.org/protobuf v1.25.0 // indirect
+//	helloworld v0.0.0
+)
+
+//replace helloworld => ./helloworld
+
+```
+
+
+`C)`: Edit `helloworld/BUILD.bazel`
+
 Enable the rule that uses `helloworld.pb.go` and disable the rest:
 
 ```bazel
@@ -281,4 +307,17 @@ go_library(
         "@org_golang_x_net//context:go_default_library",         
     ],
 )
+```
+
+`D)`  Run `gazelle` to populate dependencies in `WORKSPACE`:
+
+```
+bazel run :gazelle -- update-repos -from_file=go.mod -build_file_proto_mode=disable_global
+```
+
+
+`E)`: Run client/server:
+
+```
+bazel run greeter_server:server
 ```
