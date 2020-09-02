@@ -20,14 +20,15 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net"
-	"fmt"
 
+	pb "helloworld"
+
+	"github.com/google/uuid"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"github.com/google/uuid"	
-	pb "github.com/salrashid123/go-grpc-bazel-docker/examples/helloworld"
 )
 
 const (

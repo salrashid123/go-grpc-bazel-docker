@@ -232,6 +232,53 @@ $ docker inspect bazel/greeter_server:greeter_server_image
 
 ```
 
-### TODO:
+### Using Pregenerated protopb and gazelle
 
-- use `gazelle` for dependencies `bazel run //:gazelle -- update-repos -from_file=examples/greeter_server/go.mod`
+```
+/usr/local/bin/protoc -I ./helloworld --include_imports --include_source_info --descriptor_set_out=helloworld/helloworld.proto.pb  --go_out=plugins=grpc:./helloworld/ helloworld/helloworld.proto
+```
+
+then in `helloworld/BUILD.bazel
+Enable the rule that uses `helloworld.pb.go` and disable the rest:
+
+```bazel
+proto_library(
+#     name = "helloworld_proto",
+#     srcs = ["helloworld.proto"],
+#     visibility = ["//visibility:public"],
+# )
+
+# go_proto_library(
+#     name = "helloworld_go_proto",
+#     compiler = "@io_bazel_rules_go//proto:go_grpc",
+#     compilers = ["@io_bazel_rules_go//proto:go_grpc"],
+#     importpath = "helloworld",
+#     proto = ":helloworld_proto",
+#     visibility = ["//visibility:public"],
+# )
+
+# go_library(
+#     name = "go_default_library",
+#     embed = [":helloworld_go_proto"],
+#     importpath = "helloworld",
+#     visibility = ["//visibility:public"],
+# )
+
+go_library(
+    name = "helloworld_go_proto",
+    srcs = [
+        "helloworld.pb.go",
+    ],
+    importpath = "helloworld",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_golang_protobuf//proto:go_default_library",
+        "@org_golang_google_protobuf//reflect/protoreflect:go_default_library",
+        "@org_golang_google_protobuf//runtime/protoimpl:go_default_library",
+        "@org_golang_google_grpc//:go_default_library",
+        "@org_golang_google_grpc//codes:go_default_library",
+        "@org_golang_google_grpc//status:go_default_library",                
+        "@org_golang_x_net//context:go_default_library",         
+    ],
+)
+```

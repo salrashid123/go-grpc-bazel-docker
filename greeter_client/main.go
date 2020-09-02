@@ -24,9 +24,10 @@ import (
 	"os"
 	"time"
 
+	pb "helloworld"
+
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	pb "github.com/salrashid123/go-grpc-bazel-docker/examples/helloworld"
 )
 
 const (
