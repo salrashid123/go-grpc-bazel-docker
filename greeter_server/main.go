@@ -29,14 +29,33 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/health"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/status"
 )
 
 const (
 	port = ":50051"
 )
 
+var (
+	hs *health.Server
+)
+
 // server is used to implement helloworld.GreeterServer.
 type server struct{}
+type healthServer struct{}
+
+func (s *healthServer) Check(ctx context.Context, in *healthpb.HealthCheckRequest) (*healthpb.HealthCheckResponse, error) {
+	log.Printf("Handling grpc Check request")
+	return &healthpb.HealthCheckResponse{Status: healthpb.HealthCheckResponse_SERVING}, nil
+}
+
+func (s *healthServer) Watch(in *healthpb.HealthCheckRequest, srv healthpb.Health_WatchServer) error {
+	return status.Error(codes.Unimplemented, "Watch is not implemented")
+}
 
 // SayHello implements helloworld.GreeterServer
 func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
@@ -53,6 +72,8 @@ func main() {
 	sopts := []grpc.ServerOption{grpc.MaxConcurrentStreams(10)}
 	s := grpc.NewServer(sopts...)
 	pb.RegisterGreeterServer(s, &server{})
+
+	healthpb.RegisterHealthServer(s, &healthServer{})
 
 	log.Printf("Starting server...")
 	if err := s.Serve(lis); err != nil {

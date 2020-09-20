@@ -28,10 +28,11 @@ import (
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 const (
-	address     = "localhost:50051"
+	address     = "127.0.0.1:50051"
 	defaultName = "world"
 )
 
@@ -49,8 +50,18 @@ func main() {
 	if len(os.Args) > 1 {
 		name = os.Args[1]
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
+	resp, err := healthpb.NewHealthClient(conn).Check(ctx, &healthpb.HealthCheckRequest{Service: "helloworld.GreeterServer"})
+	if err != nil {
+		log.Fatalf("HealthCheck failed %+v", err)
+	}
+	if resp.GetStatus() != healthpb.HealthCheckResponse_SERVING {
+		log.Fatalf("service not in serving state: ", resp.GetStatus().String())
+	}
+	log.Printf("RPC HealthChekStatus:%v", resp.GetStatus())
 	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: name})
 	if err != nil {
 		log.Fatalf("could not greet: %v", err)
