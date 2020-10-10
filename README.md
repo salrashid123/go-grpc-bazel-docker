@@ -26,7 +26,7 @@ bazel build --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_cli
 bazel run  --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_client:greeter_client_image
 ```
 
-Note, the bazel base image specifies the image+hash so your'e starting off from a known state:
+Note, the bazel base image specifies the image+hash so you're starting off from a known state:
 
 - `WORKSPACE`
 
@@ -44,97 +44,14 @@ container_pull(
 
 ```bash
 $ docker images  | grep bazel
-bazel/greeter_server                        greeter_server_image   2de507b33df9        50 years ago        16MB
-bazel/greeter_client                        greeter_client_image   0ebd575f57c5        50 years ago        15.8MB
+bazel/greeter_client                      greeter_client_image                     5a15ab6f0fc6        50 years ago        15.8MB
+bazel/greeter_server                      greeter_server_image                     0e7202fe6d42        50 years ago        16.1MB
 ```
 
 Inspect the image thats generated...these wil be the same no matter where you generate the images
 
 ```yaml
 $ docker inspect bazel/greeter_server:greeter_server_image
-[
-    {
-        "Id": "sha256:2de507b33df9e0ffee6cb883c318a4d4fc0b487e6fae04ee1be1120f8f5a329c",
-        "RepoTags": [
-            "bazel/greeter_server:greeter_server_image"
-        ],
-        "RepoDigests": [],
-        "Parent": "",
-        "Comment": "",
-        "Created": "1970-01-01T00:00:00Z",
-        "Container": "f382632c7b88c2348c28b8754b3aeb69f3c69448d48a7c8e27675abd309a04cf",
-        "ContainerConfig": {
-            "Hostname": "",
-            "Domainname": "",
-            "User": "",
-            "AttachStdin": false,
-            "AttachStdout": false,
-            "AttachStderr": false,
-            "Tty": false,
-            "OpenStdin": false,
-            "StdinOnce": false,
-            "Env": null,
-            "Cmd": null,
-            "Image": "",
-            "Volumes": null,
-            "WorkingDir": "",
-            "Entrypoint": null,
-            "OnBuild": null,
-            "Labels": null
-        },
-        "DockerVersion": "18.06.1-ce",
-        "Author": "Bazel",
-        "Config": {
-            "Hostname": "",
-            "Domainname": "",
-            "User": "",
-            "AttachStdin": false,
-            "AttachStdout": false,
-            "AttachStderr": false,
-            "Tty": false,
-            "OpenStdin": false,
-            "StdinOnce": false,
-            "Env": [
-                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-            ],
-            "Cmd": [
-                "/bin/sh"
-            ],
-            "ArgsEscaped": true,
-            "Image": "sha256:57e798527dbcbda6abbc2214fe12346873f25ba65c6ced0a65a149b316a3e9a1",
-            "Volumes": null,
-            "WorkingDir": "",
-            "Entrypoint": [
-                "/server"
-            ],
-            "OnBuild": null,
-            "Labels": null
-        },
-        "Architecture": "amd64",
-        "Os": "linux",
-        "Size": 16022581,
-        "VirtualSize": 16022581,
-        "GraphDriver": {
-            "Data": {
-                "LowerDir": "/var/lib/docker/overlay2/567091aeb276db80ba6894ced4fe82b4761108a9e0433b1cca470c85686bd194/diff",
-                "MergedDir": "/var/lib/docker/overlay2/8d6a205645512e04ff2f5002057c53a60ef99537834e7d85de1fcd597e2fc3bb/merged",
-                "UpperDir": "/var/lib/docker/overlay2/8d6a205645512e04ff2f5002057c53a60ef99537834e7d85de1fcd597e2fc3bb/diff",
-                "WorkDir": "/var/lib/docker/overlay2/8d6a205645512e04ff2f5002057c53a60ef99537834e7d85de1fcd597e2fc3bb/work"
-            },
-            "Name": "overlay2"
-        },
-        "RootFS": {
-            "Type": "layers",
-            "Layers": [
-                "sha256:a1852e9ff2e7cb61bd911cb964ae939e95621121a53b1e5af7c2cb341cd04283",
-                "sha256:3a3b796daf68cc68a197c363e60b22adbb10e383a22bdbeb165f96aa02cb1b4c"
-            ]
-        },
-        "Metadata": {
-            "LastTagTime": "2020-09-20T12:09:22.440811453-04:00"
-        }
-    }
-]
 ```
 
 ### (optional) gRPC Client/Server
@@ -174,23 +91,22 @@ $ bazel build --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_s
 $ bazel run  --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_server:greeter_server_image
 
 $ docker push salrashid123/greeter_server:greeter_server_image
-    greeter_server_image: digest: sha256:6e10797105b2bd4889ac10155dcb87dc615d4168fbaf78444e8ec6fdbaf7a967 size: 738
+    greeter_server_image: digest: sha256:ad143241dbe86f462d73006acb8c70119da319f2b2a8c6da6881d7a6e6e21a9b size: 738
 
 ```
 
 On any other machine pull the image and inspect
 
 ```bash
-$ docker inspect salrashid123/greeter_server@sha256:6e10797105b2bd4889ac10155dcb87dc615d4168fbaf78444e8ec6fdbaf7a967
-[
-    {
-        "Id": "sha256:2de507b33df9e0ffee6cb883c318a4d4fc0b487e6fae04ee1be1120f8f5a329c",
+$ docker inspect salrashid123/greeter_server@sha256:ad143241dbe86f462d73006acb8c70119da319f2b2a8c6da6881d7a6e6e21a9b
+
+        "Id": "sha256:0e7202fe6d424835f2b5aa4a15c72c70d1318ba10f8877be1ab234155a58548b",
         "RepoTags": [
             "bazel/greeter_server:greeter_server_image",
             "salrashid123/greeter_server:greeter_server_image"
         ],
         "RepoDigests": [
-            "salrashid123/greeter_server@sha256:6e10797105b2bd4889ac10155dcb87dc615d4168fbaf78444e8ec6fdbaf7a967"
+            "salrashid123/greeter_server@sha256:ad143241dbe86f462d73006acb8c70119da319f2b2a8c6da6881d7a6e6e21a9b"
         ],
    ...
 ```
@@ -214,19 +130,22 @@ container_image(
 ```bash
 $ gcloud builds submit --config=cloudbuild.yaml --machine-type=n1-highcpu-32
 
-    Loaded image ID: sha256:2de507b33df9e0ffee6cb883c318a4d4fc0b487e6fae04ee1be1120f8f5a329c
-    Tagging 2de507b33df9e0ffee6cb883c318a4d4fc0b487e6fae04ee1be1120f8f5a329c as gcr.io/mineral-minutia-820/greeter_server:greeter_server_image
+    Loaded image ID: sha256:0e7202fe6d424835f2b5aa4a15c72c70d1318ba10f8877be1ab234155a58548b
+    Tagging 0e7202fe6d424835f2b5aa4a15c72c70d1318ba10f8877be1ab234155a58548b as gcr.io/mineral-minutia-820/greeter_server:greeter_server_image
     PUSH
-    greeter_server_image: digest: sha256:6e10797105b2bd4889ac10155dcb87dc615d4168fbaf78444e8ec6fdbaf7a967 size: 738
+    Pushing gcr.io/mineral-minutia-820/greeter_server:greeter_server_image
+    greeter_server_image: digest: sha256:ad143241dbe86f462d73006acb8c70119da319f2b2a8c6da6881d7a6e6e21a9b size: 738
     DONE
+    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     ID                                    CREATE_TIME                DURATION  SOURCE                                                                                             IMAGES                                                          STATUS
-    d9b44831-e2b5-459b-b5d1-83c78a30a707  2020-09-20T16:14:34+00:00  2M25S     gs://mineral-minutia-820_cloudbuild/source/1600618473.457799-5b397e0230844adbb7b2f13721b24cf4.tgz  gcr.io/mineral-minutia-820/greeter_server:greeter_server_image  SUCCESS
+    a737e11b-bd49-417f-a756-e528b81bfc33  2020-10-10T11:24:06+00:00  2M19S     gs://mineral-minutia-820_cloudbuild/source/1602329045.687942-27e05e42dc1046a69d0900e4a5161956.tgz  gcr.io/mineral-minutia-820/greeter_server:greeter_server_image  SUCCESS
+
 ```
 
 Note the docker hub image hash and gcr.io hash for the server is
 
-`sha256:6e10797105b2bd4889ac10155dcb87dc615d4168fbaf78444e8ec6fdbaf7a967`
+`sha256:ad143241dbe86f462d73006acb8c70119da319f2b2a8c6da6881d7a6e6e21a9b`
 
 ### Using Pregenerated protopb and gazelle
 

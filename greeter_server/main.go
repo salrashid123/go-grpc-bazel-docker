@@ -21,6 +21,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net"
 
@@ -49,7 +50,7 @@ type server struct{}
 type healthServer struct{}
 
 func (s *healthServer) Check(ctx context.Context, in *healthpb.HealthCheckRequest) (*healthpb.HealthCheckResponse, error) {
-	log.Printf("Handling grpc Check request")
+	log.Printf("Handling grpc Check request: " + in.Service)
 	return &healthpb.HealthCheckResponse{Status: healthpb.HealthCheckResponse_SERVING}, nil
 }
 
@@ -62,6 +63,51 @@ func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloRe
 	uid, _ := uuid.NewUUID()
 	msg := fmt.Sprintf("Hello %s  --> %s ", in.Name, uid.String())
 	return &pb.HelloReply{Message: msg}, nil
+}
+
+func (s *server) SayHelloServerStream(in *pb.HelloRequest, stream pb.Greeter_SayHelloServerStreamServer) error {
+	log.Println("Got SayHelloServerStream: Request ")
+	for i := 0; i < 5; i++ {
+		stream.Send(&pb.HelloReply{Message: "SayHelloServerStream Response"})
+	}
+	return nil
+}
+
+func (s server) SayHelloBiDiStream(srv pb.Greeter_SayHelloBiDiStreamServer) error {
+	ctx := srv.Context()
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
+		req, err := srv.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			log.Printf("receive error %v", err)
+			continue
+		}
+		log.Printf("Got SayHelloBiDiStream %s", req.Name)
+		resp := &pb.HelloReply{Message: "SayHelloBiDiStream Server Response"}
+		if err := srv.Send(resp); err != nil {
+			log.Printf("send error %v", err)
+		}
+	}
+}
+
+func (s server) SayHelloClientStream(stream pb.Greeter_SayHelloClientStreamServer) error {
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return stream.SendAndClose(&pb.HelloReply{Message: "SayHelloClientStream  Response"})
+		}
+		if err != nil {
+			return err
+		}
+		log.Printf("Got SayHelloClientStream Request: %s", req.Name)
+	}
 }
 
 func main() {
