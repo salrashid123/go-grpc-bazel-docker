@@ -43,9 +43,8 @@ container_pull(
 ### Check Image
 
 ```bash
-$ docker images  | grep bazel
-bazel/greeter_client                      greeter_client_image                     5a15ab6f0fc6        50 years ago        15.8MB
-bazel/greeter_server                      greeter_server_image                     0e7202fe6d42        50 years ago        16.1MB
+bazel/greeter_client                         greeter_client_image                     c44e11355e04        50 years ago        15.9MB
+bazel/greeter_server                         greeter_server_image                     9dcc3f1692fe        50 years ago        16.1MB
 ```
 
 Inspect the image thats generated...these wil be the same no matter where you generate the images
@@ -58,15 +57,15 @@ $ docker inspect bazel/greeter_server:greeter_server_image
 
 (why not?)
 ```
-docker run -p 50051:50051 bazel/greeter_server:greeter_server_image
-docker run --network="host" bazel/greeter_client:greeter_client_image
+docker run -p 50051:50051 bazel/greeter_server:greeter_server_image --grpcport :50051
+docker run --network="host" bazel/greeter_client:greeter_client_image --host localhost:50051
 ```
 
 or directly with bazel
 
 ```
-bazel run --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_server:server
-bazel run --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_client:client
+bazel run --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_server:server -- --grpcport :50051
+bazel run --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_client:client -- --host localhost:50051
 ```
 
 ### Specify docker image
@@ -91,22 +90,22 @@ $ bazel build --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_s
 $ bazel run  --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_server:greeter_server_image
 
 $ docker push salrashid123/greeter_server:greeter_server_image
-    greeter_server_image: digest: sha256:ad143241dbe86f462d73006acb8c70119da319f2b2a8c6da6881d7a6e6e21a9b size: 738
+    greeter_server_image: digest: sha256:99be982551073de4dd1989940c80bdedcd84b1a0b42eb76e953a3f1b1643e56b size: 738
 
 ```
 
 On any other machine pull the image and inspect
 
 ```bash
-$ docker inspect salrashid123/greeter_server@sha256:ad143241dbe86f462d73006acb8c70119da319f2b2a8c6da6881d7a6e6e21a9b
+$ docker inspect salrashid123/greeter_server@sha256:99be982551073de4dd1989940c80bdedcd84b1a0b42eb76e953a3f1b1643e56b
 
-        "Id": "sha256:0e7202fe6d424835f2b5aa4a15c72c70d1318ba10f8877be1ab234155a58548b",
+        "Id": "sha256:9dcc3f1692fe1eee9cfdd934c64e0af025cda2ddd13b442ec712b96f3b5576ca",
         "RepoTags": [
             "bazel/greeter_server:greeter_server_image",
             "salrashid123/greeter_server:greeter_server_image"
         ],
         "RepoDigests": [
-            "salrashid123/greeter_server@sha256:ad143241dbe86f462d73006acb8c70119da319f2b2a8c6da6881d7a6e6e21a9b"
+            "salrashid123/greeter_server@sha256:99be982551073de4dd1989940c80bdedcd84b1a0b42eb76e953a3f1b1643e56b"
         ],
    ...
 ```
@@ -130,17 +129,17 @@ container_image(
 ```bash
 $ gcloud builds submit --config=cloudbuild.yaml --machine-type=n1-highcpu-32
 
-    Loaded image ID: sha256:0e7202fe6d424835f2b5aa4a15c72c70d1318ba10f8877be1ab234155a58548b
-    Tagging 0e7202fe6d424835f2b5aa4a15c72c70d1318ba10f8877be1ab234155a58548b as gcr.io/mineral-minutia-820/greeter_server:greeter_server_image
-    PUSH
-    Pushing gcr.io/mineral-minutia-820/greeter_server:greeter_server_image
-    greeter_server_image: digest: sha256:ad143241dbe86f462d73006acb8c70119da319f2b2a8c6da6881d7a6e6e21a9b size: 738
-    DONE
-    -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        Loaded image ID: sha256:9dcc3f1692fe1eee9cfdd934c64e0af025cda2ddd13b442ec712b96f3b5576ca
+        Tagging 9dcc3f1692fe1eee9cfdd934c64e0af025cda2ddd13b442ec712b96f3b5576ca as gcr.io/mineral-minutia-820/greeter_server:greeter_server_image
+        PUSH
+        Pushing gcr.io/mineral-minutia-820/greeter_server:greeter_server_image
+        The push refers to repository [gcr.io/mineral-minutia-820/greeter_server]
+        greeter_server_image: digest: sha256:99be982551073de4dd1989940c80bdedcd84b1a0b42eb76e953a3f1b1643e56b size: 738
+        DONE
+        -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    ID                                    CREATE_TIME                DURATION  SOURCE                                                                                             IMAGES                                                          STATUS
-    a737e11b-bd49-417f-a756-e528b81bfc33  2020-10-10T11:24:06+00:00  2M19S     gs://mineral-minutia-820_cloudbuild/source/1602329045.687942-27e05e42dc1046a69d0900e4a5161956.tgz  gcr.io/mineral-minutia-820/greeter_server:greeter_server_image  SUCCESS
-
+        ID                                    CREATE_TIME                DURATION  SOURCE                                                                                             IMAGES                                                          STATUS
+        ba9d078e-d974-458b-afe8-af1fdf271638  2020-10-12T15:03:39+00:00  2M13S     gs://mineral-minutia-820_cloudbuild/source/1602515018.756311-f40d9688cca14064afb512e4b0fa576e.tgz  gcr.io/mineral-minutia-820/greeter_server:greeter_server_image  SUCCESS
 ```
 
 Note the docker hub image hash and gcr.io hash for the server is

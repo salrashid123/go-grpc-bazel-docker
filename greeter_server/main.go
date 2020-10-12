@@ -20,6 +20,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -37,11 +38,9 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const (
-	port = ":50051"
-)
 
 var (
+	grpcport = flag.String("grpcport", ":50051", "grpcport")
 	hs *health.Server
 )
 
@@ -111,7 +110,8 @@ func (s server) SayHelloClientStream(stream pb.Greeter_SayHelloClientStreamServe
 }
 
 func main() {
-	lis, err := net.Listen("tcp", port)
+	flag.Parse()
+	lis, err := net.Listen("tcp", *grpcport)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}

@@ -20,10 +20,10 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"log"
-	"os"
 	"time"
 
 	pb "helloworld"
@@ -33,25 +33,24 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
+var (
+	address = flag.String("host", "localhost:50051", "host:port of gRPC server")
+)
+
 const (
-	address     = "127.0.0.1:50051"
 	defaultName = "world"
 )
 
 func main() {
+	flag.Parse()
+
 	// Set up a connection to the server.
-	conn, err := grpc.Dial(address, grpc.WithInsecure())
+	conn, err := grpc.Dial(*address, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
 	defer conn.Close()
 	c := pb.NewGreeterClient(conn)
-
-	// Contact the server and print out its response.
-	name := defaultName
-	if len(os.Args) > 1 {
-		name = os.Args[1]
-	}
 
 	ctx := context.Background()
 
@@ -69,7 +68,7 @@ func main() {
 	log.Printf("RPC HealthChekStatus:%v", resp.GetStatus())
 
 	// ******** Unary Request
-	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: name})
+	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: defaultName})
 	if err != nil {
 		log.Fatalf("could not greet: %v", err)
 	}
