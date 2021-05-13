@@ -1,50 +1,33 @@
-// Forked from https://github.com/grpc/grpc-go.
-/*
- *
- * Copyright 2015 gRPC authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
 package main
 
 import (
 	"flag"
-	"fmt"
 	"io"
 	"log"
 	"net"
 
-	pb "helloworld"
+	"echo"
 
 	"github.com/google/uuid"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
 )
 
-
 var (
 	grpcport = flag.String("grpcport", ":50051", "grpcport")
-	hs *health.Server
+	tlsCert  = flag.String("tlsCert", "", "tls Certificate")
+	tlsKey   = flag.String("tlsKey", "", "tls Key")
+	insecure = flag.Bool("insecure", false, "startup without TLS")
+	hs       *health.Server
 )
 
-// server is used to implement helloworld.GreeterServer.
+// server is used to implement echo.EchoServer.
 type server struct{}
 type healthServer struct{}
 
@@ -57,22 +40,21 @@ func (s *healthServer) Watch(in *healthpb.HealthCheckRequest, srv healthpb.Healt
 	return status.Error(codes.Unimplemented, "Watch is not implemented")
 }
 
-// SayHello implements helloworld.GreeterServer
-func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
+func (s *server) SayHelloUnary(ctx context.Context, in *echo.EchoRequest) (*echo.EchoReply, error) {
+	log.Println("Got Unary Request: ")
 	uid, _ := uuid.NewUUID()
-	msg := fmt.Sprintf("Hello %s  --> %s ", in.Name, uid.String())
-	return &pb.HelloReply{Message: msg}, nil
+	return &echo.EchoReply{Message: "SayHelloUnary Response " + uid.String()}, nil
 }
 
-func (s *server) SayHelloServerStream(in *pb.HelloRequest, stream pb.Greeter_SayHelloServerStreamServer) error {
+func (s *server) SayHelloServerStream(in *echo.EchoRequest, stream echo.EchoServer_SayHelloServerStreamServer) error {
 	log.Println("Got SayHelloServerStream: Request ")
 	for i := 0; i < 5; i++ {
-		stream.Send(&pb.HelloReply{Message: "SayHelloServerStream Response"})
+		stream.Send(&echo.EchoReply{Message: "SayHelloServerStream Response"})
 	}
 	return nil
 }
 
-func (s server) SayHelloBiDiStream(srv pb.Greeter_SayHelloBiDiStreamServer) error {
+func (s server) SayHelloBiDiStream(srv echo.EchoServer_SayHelloBiDiStreamServer) error {
 	ctx := srv.Context()
 	for {
 		select {
@@ -89,18 +71,18 @@ func (s server) SayHelloBiDiStream(srv pb.Greeter_SayHelloBiDiStreamServer) erro
 			continue
 		}
 		log.Printf("Got SayHelloBiDiStream %s", req.Name)
-		resp := &pb.HelloReply{Message: "SayHelloBiDiStream Server Response"}
+		resp := &echo.EchoReply{Message: "SayHelloBiDiStream Server Response"}
 		if err := srv.Send(resp); err != nil {
 			log.Printf("send error %v", err)
 		}
 	}
 }
 
-func (s server) SayHelloClientStream(stream pb.Greeter_SayHelloClientStreamServer) error {
+func (s server) SayHelloClientStream(stream echo.EchoServer_SayHelloClientStreamServer) error {
 	for {
 		req, err := stream.Recv()
 		if err == io.EOF {
-			return stream.SendAndClose(&pb.HelloReply{Message: "SayHelloClientStream  Response"})
+			return stream.SendAndClose(&echo.EchoReply{Message: "SayHelloClientStream  Response"})
 		}
 		if err != nil {
 			return err
@@ -111,13 +93,30 @@ func (s server) SayHelloClientStream(stream pb.Greeter_SayHelloClientStreamServe
 
 func main() {
 	flag.Parse()
+	if *grpcport == "" {
+		flag.Usage()
+		log.Fatalf("missing -grpcport flag (:50051)")
+	}
+
 	lis, err := net.Listen("tcp", *grpcport)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	sopts := []grpc.ServerOption{grpc.MaxConcurrentStreams(10)}
+
+	sopts := []grpc.ServerOption{}
+	if *insecure == false {
+		if *tlsCert == "" || *tlsKey == "" {
+			log.Fatalf("Must set --tlsCert and tlsKey if --insecure flags is not set")
+		}
+		ce, err := credentials.NewServerTLSFromFile(*tlsCert, *tlsKey)
+		if err != nil {
+			log.Fatalf("Failed to generate credentials %v", err)
+		}
+		sopts = append(sopts, grpc.Creds(ce))
+	}
+
 	s := grpc.NewServer(sopts...)
-	pb.RegisterGreeterServer(s, &server{})
+	echo.RegisterEchoServerServer(s, &server{})
 
 	healthpb.RegisterHealthServer(s, &healthServer{})
 

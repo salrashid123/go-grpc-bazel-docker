@@ -1,40 +1,29 @@
-// Forked from https://github.com/grpc/grpc-go.
-/*
- *
- * Copyright 2015 gRPC authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
 package main
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"time"
 
-	pb "helloworld"
+	"echo"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 var (
-	address = flag.String("host", "localhost:50051", "host:port of gRPC server")
+	address         = flag.String("host", "localhost:50051", "host:port of gRPC server")
+	insecure        = flag.Bool("insecure", false, "connect without TLS")
+	skipHealthCheck = flag.Bool("skipHealthCheck", false, "Skip Initial Healthcheck")
+	tlsCert         = flag.String("tlsCert", "", "tls Certificate")
+	serverName      = flag.String("servername", "grpc.domain.com", "CACert for server")
 )
 
 const (
@@ -45,30 +34,53 @@ func main() {
 	flag.Parse()
 
 	// Set up a connection to the server.
-	conn, err := grpc.Dial(*address, grpc.WithInsecure())
+	var err error
+	var conn *grpc.ClientConn
+	if *insecure == true {
+		conn, err = grpc.Dial(*address, grpc.WithInsecure())
+	} else {
+
+		var tlsCfg tls.Config
+		rootCAs := x509.NewCertPool()
+		pem, err := ioutil.ReadFile(*tlsCert)
+		if err != nil {
+			log.Fatalf("failed to load root CA certificates  error=%v", err)
+		}
+		if !rootCAs.AppendCertsFromPEM(pem) {
+			log.Fatalf("no root CA certs parsed from file ")
+		}
+		tlsCfg.RootCAs = rootCAs
+		tlsCfg.ServerName = *serverName
+
+		ce := credentials.NewTLS(&tlsCfg)
+		conn, err = grpc.Dial(*address, grpc.WithTransportCredentials(ce))
+	}
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
 	defer conn.Close()
-	c := pb.NewGreeterClient(conn)
 
+	c := echo.NewEchoServerClient(conn)
 	ctx := context.Background()
 
-	// ******** HealthCheck
-
+	// how to perform healthcheck request manually:
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
-	resp, err := healthpb.NewHealthClient(conn).Check(ctx, &healthpb.HealthCheckRequest{Service: "helloworld.GreeterServer"})
-	if err != nil {
-		log.Fatalf("HealthCheck failed %+v", err)
+
+	if !*skipHealthCheck {
+		resp, err := healthpb.NewHealthClient(conn).Check(ctx, &healthpb.HealthCheckRequest{Service: "echo.EchoServer"})
+		if err != nil {
+			log.Fatalf("HealthCheck failed %+v", err)
+		}
+
+		if resp.GetStatus() != healthpb.HealthCheckResponse_SERVING {
+			log.Fatalf("service not in serving state: ", resp.GetStatus().String())
+		}
+		log.Printf("RPC HealthChekStatus: %v\n", resp.GetStatus())
 	}
-	if resp.GetStatus() != healthpb.HealthCheckResponse_SERVING {
-		log.Fatalf("service not in serving state: ", resp.GetStatus().String())
-	}
-	log.Printf("RPC HealthChekStatus:%v", resp.GetStatus())
 
 	// ******** Unary Request
-	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: defaultName})
+	r, err := c.SayHelloUnary(ctx, &echo.EchoRequest{Name: defaultName})
 	if err != nil {
 		log.Fatalf("could not greet: %v", err)
 	}
@@ -83,7 +95,7 @@ func main() {
 	}
 
 	for i := 1; i < 5; i++ {
-		if err := cstream.Send(&pb.HelloRequest{Name: fmt.Sprintf("client stream RPC %d ", i)}); err != nil {
+		if err := cstream.Send(&echo.EchoRequest{Name: fmt.Sprintf("client stream RPC %d ", i)}); err != nil {
 			if err == io.EOF {
 				break
 			}
@@ -98,7 +110,7 @@ func main() {
 	log.Printf(" Got SayHelloClientStream  [%s]", creply.Message)
 
 	/// ***** SERVER Streaming
-	stream, err := c.SayHelloServerStream(ctx, &pb.HelloRequest{Name: "Stream RPC msg"})
+	stream, err := c.SayHelloServerStream(ctx, &echo.EchoRequest{Name: "Stream RPC msg"})
 	if err != nil {
 		log.Fatalf("SayHelloStream(_) = _, %v", err)
 	}
@@ -127,7 +139,7 @@ func main() {
 
 	go func() {
 		for i := 1; i <= 10; i++ {
-			req := pb.HelloRequest{Name: "Bidirectional CLient RPC msg "}
+			req := echo.EchoRequest{Name: "Bidirectional CLient RPC msg "}
 			if err := stream.SendMsg(&req); err != nil {
 				log.Fatalf("can not send %v", err)
 			}
