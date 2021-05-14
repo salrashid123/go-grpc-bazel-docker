@@ -4,7 +4,7 @@ Deterministic container images for gRPC+golang [bazel](https://bazel.build/).
 
 The following sample will build a golang gRPC client/server and then embed the binaries into container images.
 
-These images are will have a consistent image hash no matter where it is built.
+These images are will have a consistent image hash no matter where it is built (eg, `greeter_server@sha256:2cb462befb6eed81508a098452ebfa920e2305cde48e1ecc3a56efde75912360`)
 
 For reference, see:
 
@@ -21,11 +21,31 @@ If you have access to Google Cloud Platform account, you can use Cloud Shell to 
 
 ```bash
 gcloud alpha cloud-shell ssh 
+
+git clone https://github.com/salrashid123/go-grpc-bazel-docker.git
+cd go-grpc-bazel-docker
 ```
 
 Then within the shell, you should be able to `bazel version` to ensure it is installed.
 
-Cloud SDK (aka `gcloud`) permits
+
+```bash
+$ bazel version
+    Build label: 4.0.0
+    Build target: bazel-out/k8-opt/bin/src/main/java/com/google/devtools/build/lib/bazel/BazelServer_deploy.jar
+    Build time: Thu Jan 21 07:33:24 2021 (1611214404)
+    Build timestamp: 1611214404
+    Build timestamp as int: 1611214404
+
+# or 
+
+$ docker run gcr.io/cloud-builders/bazel@sha256:0bb18b771de34c386ae26bfac960cd57fda889eeef1f0171e10dab73e17cade3 version
+    Build label: 4.0.0
+    Build target: bazel-out/k8-opt/bin/src/main/java/com/google/devtools/build/lib/bazel/BazelServer_deploy.jar
+    Build time: Thu Jan 21 07:33:24 2021 (1611214404)
+    Build timestamp: 1611214404
+    Build timestamp as int: 1611214404
+```
 
 ### Build Image
 
@@ -37,36 +57,22 @@ bazel build --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_cli
 bazel run  --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_client:greeter_client_image
 ```
 
-Note, the bazel base image specifies the image+hash so you're starting off from a known state:
-
-- `WORKSPACE`
-
-```
-container_pull(
-    name = "alpine_linux_amd64",
-    registry = "index.docker.io",
-    repository = "library/alpine",
-    tag = "3.8",
-    digest = "sha256:cf35b4fa14e23492df67af08ced54a15e68ad00cac545b437b1994340f20648c"
-)
-```
-
 ### Check Image
 
+The output of the commands above will yield 
+
 ```bash
-bazel/greeter_client                         greeter_client_image                     c44e11355e04        50 years ago        15.9MB
-bazel/greeter_server                         greeter_server_image                     9dcc3f1692fe        50 years ago        16.1MB
+$ docker images
+    REPOSITORY                    TAG                    IMAGE ID       CREATED        SIZE
+    bazel/greeter_server          greeter_server_image   a5315b9825fb   51 years ago   17.3MB
+    bazel/greeter_client          greeter_client_image   014df8e803e8   51 years ago   17.1MB
 ```
 
-Inspect the image thats generated...these wil be the same no matter where you generate the images
+Inspect the image thats generated.  The hash we're after is actually `RepoTags` which we'll generate and show later, for now
 
-```yaml
-$ docker inspect bazel/greeter_server:greeter_server_image
-```
+### (optional) Run the gRPC Client/Server
 
-### (optional) gRPC Client/Server
-
-(why not?)
+(why not, you already built it)
 
 #### no TLS
 
@@ -121,7 +127,7 @@ bazel run --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_clien
 
 ### Specify docker image
 
-You can specify a repo prefix by setting the `repository` command here. In the case below, its on dockerhub as handle `salrashid123`
+Specify a docker repo to by setting the `repository` command here. In the case below, its on dockerhub as handle `salrashid123`
 
 ```bazel
 container_image(
@@ -145,6 +151,8 @@ $ docker push salrashid123/greeter_server:greeter_server_image
 
 ```
 
+you'll see the hash we need...this is specific and intrinsic to the image.
+
 On any other machine pull the image and inspect
 
 ```bash
@@ -155,7 +163,6 @@ $ docker inspect salrashid123/greeter_server@sha256:2cb462befb6eed81508a098452eb
         "Id": "sha256:a5315b9825fbaa72d36e4dd7a665e51120821dd89149a439dfde4f2e271889e4",
         "RepoTags": [
             "bazel/greeter_server:greeter_server_image",
-            "salrashid123/greeter_server:greeter_server_image",
             "gcr.io/mineral-minutia-820/greeter_server:greeter_server_image"
         ],
         "RepoDigests": [
@@ -164,7 +171,6 @@ $ docker inspect salrashid123/greeter_server@sha256:2cb462befb6eed81508a098452eb
         ],
    ...
 ```
-
 
 
 ### Cloud Build
@@ -185,22 +191,7 @@ container_image(
 $ bazel clean
 $ gcloud builds submit --config=cloudbuild.yaml --machine-type=n1-highcpu-32
 
-        INFO: Build completed successfully, 561 total actions
-        Loaded image ID: sha256:a5315b9825fbaa72d36e4dd7a665e51120821dd89149a439dfde4f2e271889e4
-        Tagging a5315b9825fbaa72d36e4dd7a665e51120821dd89149a439dfde4f2e271889e4 as gcr.io/mineral-minutia-820/greeter_server:greeter_server_image
-        PUSH
-        Pushing gcr.io/mineral-minutia-820/greeter_server:greeter_server_image
-        The push refers to repository [gcr.io/mineral-minutia-820/greeter_server]
-        8bceb6e6c58c: Preparing
-        a1852e9ff2e7: Preparing
-        a1852e9ff2e7: Pushed
-        8bceb6e6c58c: Pushed
-        greeter_server_image: digest: sha256:2cb462befb6eed81508a098452ebfa920e2305cde48e1ecc3a56efde75912360 size: 738
-        DONE
-        --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-        ID                                    CREATE_TIME                DURATION  SOURCE                                                                                             IMAGES                                                          STATUS
-        84e887de-a9b4-47c0-938f-7a49134e752b  2021-05-13T13:56:53+00:00  2M35S     gs://mineral-minutia-820_cloudbuild/source/1620914212.307308-9beb5ec70ee84d2f88cb5b8998f4d394.tgz  gcr.io/mineral-minutia-820/greeter_server:greeter_server_image  SUCCESS
 
 ```
 
@@ -209,15 +200,32 @@ Note the docker hub image hash and gcr.io hash for the server is
 `sha256:2cb462befb6eed81508a098452ebfa920e2305cde48e1ecc3a56efde75912360`
 
 
-also note the version of bazel we are using:
+
+
+
+### Attesting base dependencies
+
+The `WORKSPACE` and git dependencies are all known down to the specific version of bazel and base container image
+
+- `WORKSPACE`
+
+The base image used for the client and server is alpine:
+
+```
+container_pull(
+    name = "alpine_linux_amd64",
+    registry = "index.docker.io",
+    repository = "library/alpine",
+    tag = "3.8",
+    digest = "sha256:cf35b4fa14e23492df67af08ced54a15e68ad00cac545b437b1994340f20648c"
+)
+```
+
+- Bazel note the version of bazel we are using:
 
 ```bash
 $ docker run gcr.io/cloud-builders/bazel@sha256:77d42f9b252c6b159416b5651dd69a7861d0f2ffbea05bc5b6482caf846ec9f4 version
-Build label: 3.4.1
-Build target: bazel-out/k8-opt/bin/src/main/java/com/google/devtools/build/lib/bazel/BazelServer_deploy.jar
-Build time: Tue Jul 14 06:27:53 2020 (1594708073)
-Build timestamp: 1594708073
-Build timestamp as int: 1594708073
+
 ```
 
 ### Using Pregenerated protopb and gazelle
