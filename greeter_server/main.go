@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -55,13 +56,8 @@ func (s *server) SayHelloServerStream(in *echo.EchoRequest, stream echo.EchoServ
 }
 
 func (s server) SayHelloBiDiStream(srv echo.EchoServer_SayHelloBiDiStreamServer) error {
-	ctx := srv.Context()
+	//ctx := srv.Context()
 	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-		}
 		req, err := srv.Recv()
 		if err == io.EOF {
 			return nil
@@ -71,7 +67,7 @@ func (s server) SayHelloBiDiStream(srv echo.EchoServer_SayHelloBiDiStreamServer)
 			continue
 		}
 		log.Printf("Got SayHelloBiDiStream %s", req.Name)
-		resp := &echo.EchoReply{Message: "SayHelloBiDiStream Server Response"}
+		resp := &echo.EchoReply{Message: fmt.Sprintf("SayHelloBiDiStream Server Response for request [%s]", req.Name)}
 		if err := srv.Send(resp); err != nil {
 			log.Printf("send error %v", err)
 		}

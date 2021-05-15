@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"sync"
 	"time"
 
 	"echo"
@@ -133,17 +134,24 @@ func main() {
 	done := make(chan bool)
 	stream, err = c.SayHelloBiDiStream(context.Background())
 	if err != nil {
-		log.Fatalf("openn stream error %v", err)
+		log.Fatalf("open stream error %v", err)
 	}
 	ctx = stream.Context()
 
+	var wg sync.WaitGroup
+
 	go func() {
 		for i := 1; i <= 10; i++ {
-			req := echo.EchoRequest{Name: "Bidirectional CLient RPC msg "}
-			if err := stream.SendMsg(&req); err != nil {
-				log.Fatalf("can not send %v", err)
-			}
+			wg.Add(1)
+			go func(ctr int) {
+				defer wg.Done()
+				req := echo.EchoRequest{Name: fmt.Sprintf("CLient RPC msg %d", ctr)}
+				if err := stream.SendMsg(&req); err != nil {
+					log.Fatalf("can not send %v", err)
+				}
+			}(i)
 		}
+		wg.Wait()
 		if err := stream.CloseSend(); err != nil {
 			log.Println(err)
 		}

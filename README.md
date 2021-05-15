@@ -4,7 +4,7 @@ Deterministic container images for gRPC+golang [bazel](https://bazel.build/).
 
 The following sample will build a golang gRPC client/server and then embed the binaries into container images.
 
-These images are will have a consistent image hash no matter where it is built (eg, `greeter_server@sha256:2cb462befb6eed81508a098452ebfa920e2305cde48e1ecc3a56efde75912360`)
+These images are will have a consistent image hash no matter where it is built (eg, `greeter_server@sha256:e41adbc402ffd40eea964885170b6f651152429775d190573dc7a66f9bb9097a`)
 
 For reference, see:
 
@@ -127,7 +127,7 @@ bazel run --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_clien
 
 ### Specify docker image
 
-Specify a docker repo to by setting the `repository` command here. In the case below, its on dockerhub as handle `salrashid123`
+Specify a docker repo to by setting the `repository` command here. In the case below, its container registry `gcr.io/project_id`
 
 ```bazel
 container_image(
@@ -135,7 +135,7 @@ container_image(
     base = "@alpine_linux_amd64//image",
     entrypoint = ["/server"],
     files = [":server"],
-    repository = "salrashid123"
+    repository = "gcr.io/project_id`"
 )
 ```
 
@@ -146,8 +146,8 @@ on push to a repo
 $ bazel build --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_server:all
 $ bazel run  --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_server:greeter_server_image
 
-$ docker push salrashid123/greeter_server:greeter_server_image
-    greeter_server_image: digest: sha256:2cb462befb6eed81508a098452ebfa920e2305cde48e1ecc3a56efde75912360 size: 738
+$ docker push gcr.io/project_id/greeter_server:greeter_server_image
+    greeter_server_image: digest: sha256:e41adbc402ffd40eea964885170b6f651152429775d190573dc7a66f9bb9097a size: 738
 
 ```
 
@@ -156,19 +156,21 @@ you'll see the hash we need...this is specific and intrinsic to the image.
 On any other machine pull the image and inspect
 
 ```bash
-$ docker inspect salrashid123/greeter_server@sha256:2cb462befb6eed81508a098452ebfa920e2305cde48e1ecc3a56efde75912360
+$ docker pull salrashid123/greeter_server:greeter_server_image
+$ docker inspect gcr.io/project_id/greeter_server@sha256:e41adbc402ffd40eea964885170b6f651152429775d190573dc7a66f9bb9097a
 
-[
-    {
-        "Id": "sha256:a5315b9825fbaa72d36e4dd7a665e51120821dd89149a439dfde4f2e271889e4",
-        "RepoTags": [
-            "bazel/greeter_server:greeter_server_image",
-            "gcr.io/mineral-minutia-820/greeter_server:greeter_server_image"
-        ],
-        "RepoDigests": [
-            "salrashid123/greeter_server@sha256:2cb462befb6eed81508a098452ebfa920e2305cde48e1ecc3a56efde75912360",
-            "gcr.io/mineral-minutia-820/greeter_server@sha256:2cb462befb6eed81508a098452ebfa920e2305cde48e1ecc3a56efde75912360"
-        ],
+    [
+        {
+            "Id": "sha256:eb327145000af8a99a17d3fba5c5af35eed7dcb2d86a3f7c77b8214d9c971a47",
+            "RepoTags": [
+                "bazel/greeter_server:greeter_server_image",
+                "salrashid123/greeter_server:greeter_server_image",
+                "gcr.io/project_id/greeter_server:greeter_server_image"
+            ],
+            "RepoDigests": [
+                "salrashid123/greeter_server@sha256:e41adbc402ffd40eea964885170b6f651152429775d190573dc7a66f9bb9097a",
+                "gcr.io/project_id/greeter_server@sha256:e41adbc402ffd40eea964885170b6f651152429775d190573dc7a66f9bb9097a"
+            ],
    ...
 ```
 
@@ -197,10 +199,7 @@ $ gcloud builds submit --config=cloudbuild.yaml --machine-type=n1-highcpu-32
 
 Note the docker hub image hash and gcr.io hash for the server is
 
-`sha256:2cb462befb6eed81508a098452ebfa920e2305cde48e1ecc3a56efde75912360`
-
-
-
+`sha256:e41adbc402ffd40eea964885170b6f651152429775d190573dc7a66f9bb9097a`
 
 
 ### Attesting base dependencies

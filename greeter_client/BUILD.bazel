@@ -16,7 +16,7 @@ container_image(
     base = "@alpine_linux_amd64//image",
     entrypoint = ["/client"],
     files = [":client"],
-    #repository = "salrashid123"
+    #repository = "gcr.io/project_id"
 )
 
 go_library(
