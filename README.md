@@ -15,6 +15,27 @@ For reference, see:
 
 To run this sample, you will need `bazel` installed (see [Cloud Shell](#cloud-shell) for an easy way to use `bazel`)
 
+In the end, you'l end up with the same digests
+
+```
+$ docker pull salrashid123/greeter_server:greeter_server_image
+$ docker inspect gcr.io/project_id/greeter_server@sha256:e41adbc402ffd40eea964885170b6f651152429775d190573dc7a66f9bb9097a
+
+    [
+        {
+            "Id": "sha256:eb327145000af8a99a17d3fba5c5af35eed7dcb2d86a3f7c77b8214d9c971a47",
+            "RepoTags": [
+                "bazel/greeter_server:greeter_server_image",
+                "salrashid123/greeter_server:greeter_server_image",
+                "gcr.io/project_id/greeter_server:greeter_server_image"
+            ],
+            "RepoDigests": [
+                "salrashid123/greeter_server@sha256:e41adbc402ffd40eea964885170b6f651152429775d190573dc7a66f9bb9097a",
+                "gcr.io/project_id/greeter_server@sha256:e41adbc402ffd40eea964885170b6f651152429775d190573dc7a66f9bb9097a"
+            ],
+   ...
+```
+
 ### Cloud Shell
 
 If you have access to Google Cloud Platform account, you can use Cloud Shell to run `bazel` and save yourself an installation.
