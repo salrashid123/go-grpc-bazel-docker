@@ -11,7 +11,7 @@ go_proto_library(
     name = "echo_go_proto",
     compiler = "@io_bazel_rules_go//proto:go_grpc",
     compilers = ["@io_bazel_rules_go//proto:go_grpc"],
-    importpath = "echo",
+    importpath = "github.com/salrashid123/go-grpc-bazel-docker/echo",
     proto = ":echo_proto",
     visibility = ["//visibility:public"],
 )
@@ -29,7 +29,7 @@ go_library(
 #     srcs = [
 #         "echo.pb.go",
 #     ],
-#     importpath = "echo",
+#     importpath = "github.com/salrashid123/go-grpc-bazel-docker/echo",
 #     visibility = ["//visibility:public"],
 #     deps = [
 #         "@com_github_golang_protobuf//proto:go_default_library",

@@ -7,7 +7,7 @@ import (
 	"log"
 	"net"
 
-	"echo"
+	"github.com/salrashid123/go-grpc-bazel-docker/echo"
 
 	"github.com/google/uuid"
 	"golang.org/x/net/context"

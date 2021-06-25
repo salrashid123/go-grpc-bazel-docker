@@ -4,7 +4,10 @@ Deterministic container images for gRPC+golang [bazel](https://bazel.build/).
 
 The following sample will build a golang gRPC client/server and then embed the binaries into container images.
 
-These images are will have a consistent image hash no matter where it is built (eg, `greeter_server@sha256:e41adbc402ffd40eea964885170b6f651152429775d190573dc7a66f9bb9097a`)
+These images are will have a consistent image hash no matter where it is built
+
+*  `greeter_server@sha256:6a296dbc5b96b051554ec589648fbdd83993cf5889630cd4098606c8fd7d0eac`
+*  `greeter_client@sha256:92251eecfb9dfbbaba55b772353d970bf3b446ca598b3f543704950e7a75f47a`
 
 For reference, see:
 
@@ -15,24 +18,26 @@ For reference, see:
 
 To run this sample, you will need `bazel` installed (see [Cloud Shell](#cloud-shell) for an easy way to use `bazel`)
 
-In the end, you'l end up with the same digests
+In the end, you'll end up with the same digests
 
-```
+```bash
 $ docker pull salrashid123/greeter_server:greeter_server_image
-$ docker inspect gcr.io/project_id/greeter_server@sha256:e41adbc402ffd40eea964885170b6f651152429775d190573dc7a66f9bb9097a
+$ docker pull gcr.io/your_project/greeter_server:greeter_server_image
 
-    [
-        {
-            "Id": "sha256:eb327145000af8a99a17d3fba5c5af35eed7dcb2d86a3f7c77b8214d9c971a47",
-            "RepoTags": [
-                "bazel/greeter_server:greeter_server_image",
-                "salrashid123/greeter_server:greeter_server_image",
-                "gcr.io/project_id/greeter_server:greeter_server_image"
-            ],
-            "RepoDigests": [
-                "salrashid123/greeter_server@sha256:e41adbc402ffd40eea964885170b6f651152429775d190573dc7a66f9bb9097a",
-                "gcr.io/project_id/greeter_server@sha256:e41adbc402ffd40eea964885170b6f651152429775d190573dc7a66f9bb9097a"
-            ],
+$ docker inspect gcr.io/your_project/greeter_server:greeter_server_image
+[
+    {
+        "Id": "sha256:8668f16460afb698fbfe2d15f4efe13cda0d56b73a5d78ca26e9e5a23e74de29",
+        "RepoTags": [
+            "bazel/greeter_server:greeter_server_image",
+            "salrashid123/greeter_server:greeter_server_image",
+            "gcr.io/mineral-minutia-820/greeter_server:greeter_server_image"
+        ],
+        "RepoDigests": [
+            "salrashid123/greeter_server@sha256:6a296dbc5b96b051554ec589648fbdd83993cf5889630cd4098606c8fd7d0eac",
+            "gcr.io/mineral-minutia-820/greeter_server@sha256:6a296dbc5b96b051554ec589648fbdd83993cf5889630cd4098606c8fd7d0eac"
+        ],
+
    ...
 ```
 
@@ -52,23 +57,31 @@ Then within the shell, you should be able to `bazel version` to ensure it is ins
 
 ```bash
 $ bazel version
-    Build label: 4.0.0
+    Build label: 4.1.0
     Build target: bazel-out/k8-opt/bin/src/main/java/com/google/devtools/build/lib/bazel/BazelServer_deploy.jar
-    Build time: Thu Jan 21 07:33:24 2021 (1611214404)
-    Build timestamp: 1611214404
-    Build timestamp as int: 1611214404
+    Build time: Fri May 21 11:11:34 2021 (1621595494)
+    Build timestamp: 1621595494
+    Build timestamp as int: 1621595494
 
 # or 
 
 $ docker run gcr.io/cloud-builders/bazel@sha256:0bb18b771de34c386ae26bfac960cd57fda889eeef1f0171e10dab73e17cade3 version
-    Build label: 4.0.0
+    Build label: 4.1.0
     Build target: bazel-out/k8-opt/bin/src/main/java/com/google/devtools/build/lib/bazel/BazelServer_deploy.jar
-    Build time: Thu Jan 21 07:33:24 2021 (1611214404)
-    Build timestamp: 1611214404
-    Build timestamp as int: 1611214404
+    Build time: Fri May 21 11:11:34 2021 (1621595494)
+    Build timestamp: 1621595494
+    Build timestamp as int: 1621595494
 ```
 
-### Build Image
+### Build Image with Bazel
+
+Declare go dependencies from `go.mod` into `repositories.bzl`:
+
+```
+bazel run :gazelle -- update-repos -from_file=go.mod -prune=true -to_macro=repositories.bzl%go_repositories
+```
+
+Then build the client and server
 
 ```bash
 bazel build --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_server:all
@@ -84,9 +97,9 @@ The output of the commands above will yield
 
 ```bash
 $ docker images
-    REPOSITORY                    TAG                    IMAGE ID       CREATED        SIZE
-    bazel/greeter_server          greeter_server_image   a5315b9825fb   51 years ago   17.3MB
-    bazel/greeter_client          greeter_client_image   014df8e803e8   51 years ago   17.1MB
+REPOSITORY                    TAG                    IMAGE ID       CREATED        SIZE
+bazel/greeter_client          greeter_client_image   aad682ca02bf   51 years ago    17.1MB
+bazel/greeter_server          greeter_server_image   cfc5df5beab8   51 years ago    17.4MB
 ```
 
 Inspect the image thats generated.  The hash we're after is actually `RepoTags` which we'll generate and show later, for now
@@ -95,22 +108,9 @@ Inspect the image thats generated.  The hash we're after is actually `RepoTags` 
 
 (why not, you already built it)
 
-#### no TLS
+#### withoug TLS
 
-with go
-
-```bash
-# as go, optionally compile
-# /usr/local/bin/protoc -I ./echo \
-#   --include_imports --include_source_info \
-#   --descriptor_set_out=echo/echo.proto.pb \
-#   --go_out=plugins=grpc:./echo/ echo/echo.proto
-
-go run greeter_server/main.go --grpcport :50051 --insecure  
-go run greeter_client/main.go --host localhost:50051 --insecure
-```
-
-with docker:
+- with docker
 
 ```
 docker run -p 50051:50051 bazel/greeter_server:greeter_server_image --grpcport :50051 --insecure
@@ -126,24 +126,28 @@ bazel run --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_clien
 
 #### with TLS
 
-with go
-
-```bash
-go run greeter_server/main.go --grpcport :50051 --tlsCert certs/grpc_server_crt.pem --tlsKey certs/grpc_server_key.pem
-go run greeter_client/main.go --host localhost:50051 --tlsCert certs/CA_crt.pem --servername grpc.domain.com -skipHealthCheck
-```
-
-with docker
+- with docker
 
 ```bash
 docker run -v `pwd`/certs:/certs -p 50051:50051 bazel/greeter_server:greeter_server_image --grpcport :50051 --tlsCert certs/grpc_server_crt.pem --tlsKey certs/grpc_server_key.pem
+
 docker run -v `pwd`/certs:/certs --network="host" bazel/greeter_client:greeter_client_image --host localhost:50051 --tlsCert certs/CA_crt.pem --servername grpc.domain.com -skipHealthCheck
 ```
 with bazel
 
 ```bash
 bazel run --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_server:server -- --grpcport :50051 --tlsCert certs/grpc_server_crt.pem --tlsKey certs/grpc_server_key.pem
+
 bazel run --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_client:client -- --host localhost:50051 --tlsCert certs/CA_crt.pem --servername grpc.domain.com -skipHealthCheck
+```
+
+with go
+
+You will first want to build the files, see corresponding steps above
+
+```bash
+go run greeter_server/main.go --grpcport :50051 --tlsCert certs/grpc_server_crt.pem --tlsKey certs/grpc_server_key.pem
+go run greeter_client/main.go --host localhost:50051 --tlsCert certs/CA_crt.pem --servername grpc.domain.com -skipHealthCheck
 ```
 
 ### Specify docker image
@@ -168,30 +172,29 @@ $ bazel build --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_s
 $ bazel run  --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_server:greeter_server_image
 
 $ docker push gcr.io/project_id/greeter_server:greeter_server_image
-    greeter_server_image: digest: sha256:e41adbc402ffd40eea964885170b6f651152429775d190573dc7a66f9bb9097a size: 738
-
+    greeter_server_image: digest: sha256:6a296dbc5b96b051554ec589648fbdd83993cf5889630cd4098606c8fd7d0eac size: 738
 ```
 
 you'll see the hash we need...this is specific and intrinsic to the image.
 
-On any other machine pull the image and inspect
+On any other machine, generate the builds and inspect
 
 ```bash
 $ docker pull salrashid123/greeter_server:greeter_server_image
-$ docker inspect gcr.io/project_id/greeter_server@sha256:e41adbc402ffd40eea964885170b6f651152429775d190573dc7a66f9bb9097a
+$ docker inspect gcr.io/project_id/greeter_server:greeter_server_image
 
-    [
-        {
-            "Id": "sha256:eb327145000af8a99a17d3fba5c5af35eed7dcb2d86a3f7c77b8214d9c971a47",
-            "RepoTags": [
-                "bazel/greeter_server:greeter_server_image",
-                "salrashid123/greeter_server:greeter_server_image",
-                "gcr.io/project_id/greeter_server:greeter_server_image"
-            ],
-            "RepoDigests": [
-                "salrashid123/greeter_server@sha256:e41adbc402ffd40eea964885170b6f651152429775d190573dc7a66f9bb9097a",
-                "gcr.io/project_id/greeter_server@sha256:e41adbc402ffd40eea964885170b6f651152429775d190573dc7a66f9bb9097a"
-            ],
+[
+    {
+        "Id": "sha256:8668f16460afb698fbfe2d15f4efe13cda0d56b73a5d78ca26e9e5a23e74de29",
+        "RepoTags": [
+            "bazel/greeter_server:greeter_server_image",
+            "salrashid123/greeter_server:greeter_server_image",
+            "gcr.io/project_id/greeter_server:greeter_server_image"
+        ],
+        "RepoDigests": [
+            "salrashid123/greeter_server@sha256:6a296dbc5b96b051554ec589648fbdd83993cf5889630cd4098606c8fd7d0eac",
+            "gcr.io/project_id/greeter_server@sha256:6a296dbc5b96b051554ec589648fbdd83993cf5889630cd4098606c8fd7d0eac"
+        ],
    ...
 ```
 
@@ -200,27 +203,42 @@ $ docker inspect gcr.io/project_id/greeter_server@sha256:e41adbc402ffd40eea96488
 
 You can use Cloud Build to create the image by using the `bazel` builder and specifying the repository path to export to.  In the sample below, the repository is set o google container registry:
 
-```
+```yaml
 container_image(
     name = "greeter_server_image",
     base = "@alpine_linux_amd64//image",
     entrypoint = ["/server"],
     files = [":server"],
-    repository = "gcr.io/mineral-minutia-820"
+    repository = "gcr.io/your_project"
 )
 ```
+
+Note that `cloudbuild.yaml` specifies the base bazel version by hash too
+
+```yaml
+steps:
+- name: gcr.io/cloud-builders/bazel@sha256:36ab6b8816e473592fa70e0dd866caf0267cacc1ed6ac40266a082f0b70270a0
+  args: ['run', '--platforms=@io_bazel_rules_go//go/toolchain:linux_amd64', 'greeter_server:greeter_server_image']
+images: ['gcr.io/$PROJECT_ID/greeter_server:greeter_server_image']
+```
+
 
 ```bash
 $ bazel clean
 $ gcloud builds submit --config=cloudbuild.yaml --machine-type=n1-highcpu-32
 
+    ...
+    ...
+    Pushing gcr.io/project_id/greeter_server:greeter_server_image
+    The push refers to repository [gcr.io/your_project/greeter_server]
 
+    greeter_server_image: digest: sha256:6a296dbc5b96b051554ec589648fbdd83993cf5889630cd4098606c8fd7d0eac size: 738
+    DONE
+
+    ID                                    CREATE_TIME                DURATION  SOURCE                                                                                             IMAGES                                                          STATUS
+    b4148461-6a57-485c-ae0f-08faa64b2e05  2021-06-25T13:47:29+00:00  2M14S     gs://project_id_cloudbuild/source/1624628848.805103-fb510921a1d848159fe2bf618c87f761.tgz  gcr.io/project_id/greeter_server:greeter_server_image  SUCCESS
 
 ```
-
-Note the docker hub image hash and gcr.io hash for the server is
-
-`sha256:e41adbc402ffd40eea964885170b6f651152429775d190573dc7a66f9bb9097a`
 
 
 ### Attesting base dependencies
@@ -244,18 +262,25 @@ container_pull(
 - Bazel note the version of bazel we are using:
 
 ```bash
-$ docker run gcr.io/cloud-builders/bazel@sha256:77d42f9b252c6b159416b5651dd69a7861d0f2ffbea05bc5b6482caf846ec9f4 version
-
+$ docker run gcr.io/cloud-builders/bazel@sha256:36ab6b8816e473592fa70e0dd866caf0267cacc1ed6ac40266a082f0b70270a0 version
+    Build label: 4.1.0
+    Build target: bazel-out/k8-opt/bin/src/main/java/com/google/devtools/build/lib/bazel/BazelServer_deploy.jar
+    Build time: Fri May 21 11:11:34 2021 (1621595494)
+    Build timestamp: 1621595494
+    Build timestamp as int: 1621595494
 ```
 
 ### Using Pregenerated protopb and gazelle
 
+The default bazel configuration in `echo/BUILD.bazel` compiles the proto files.  If you would rather use pregenerated proto files (eg, to [avoid conflicts](https://github.com/bazelbuild/rules_go/blob/master/proto/core.rst#avoiding-conflicts), you must do that outside of bazel and just specify a library)
+
 `A)` Generate `proto.pb`:
 
 ```
-/usr/local/bin/protoc -I ./echo \
+/usr/local/bin/protoc -I ./echo  \
   --include_imports --include_source_info \
   --descriptor_set_out=echo/echo.proto.pb \
+  --go_opt=paths=source_relative \
   --go_out=plugins=grpc:./echo/ echo/echo.proto
 ```
 
@@ -271,10 +296,10 @@ require (
 	golang.org/x/net v0.0.0-20200822124328-c89045814202 // indirect
 	google.golang.org/grpc v1.31.1 // indirect
 	google.golang.org/protobuf v1.25.0 // indirect
-//	echo v0.0.0
+//	github.com/salrashid123/go-grpc-bazel-docker/echo v0.0.0
 )
 
-//replace echo => ./echo
+//replace github.com/salrashid123/go-grpc-bazel-docker/echo => ./echo
 
 ```
 
@@ -294,7 +319,7 @@ Enable the rule that uses `echo.pb.go` and disable the rest:
 #     name = "echo_go_proto",
 #     compiler = "@io_bazel_rules_go//proto:go_grpc",
 #     compilers = ["@io_bazel_rules_go//proto:go_grpc"],
-#     importpath = "echo",
+#     importpath = "github.com/salrashid123/go-grpc-bazel-docker/echo",
 #     proto = ":echo_proto",
 #     visibility = ["//visibility:public"],
 # )
@@ -311,7 +336,7 @@ go_library(
     srcs = [
         "echo.pb.go",
     ],
-    importpath = "echo",
+    importpath = "github.com/salrashid123/go-grpc-bazel-docker/echo",
     visibility = ["//visibility:public"],
     deps = [
         "@com_github_golang_protobuf//proto:go_default_library",
@@ -326,8 +351,55 @@ go_library(
 )
 ```
 
-`D)`  Run `gazelle` to populate dependencies in `WORKSPACE`:
+`D)`  Run `gazelle` to populate dependencies in `repositories.bzl`:
 
 ```
-bazel run :gazelle -- update-repos -from_file=go.mod -build_file_proto_mode=disable_global
+bazel run :gazelle -- update-repos -from_file=go.mod -prune=true -to_macro=repositories.bzl%go_repositories
+```
+
+### Build and run without bazel
+
+The focus of this repo is to use bazel to build and run. ...but if you want to manually build the proto and use go,
+
+```bash
+$ protoc --version
+  libprotoc 3.13.0
+
+$ go version
+   go version go1.15.2 linux/amd64
+
+$ bazel version
+  Build label: 4.1.0
+
+# as go, optionally compile
+/usr/local/bin/protoc -I ./echo  \
+  --include_imports --include_source_info \
+  --descriptor_set_out=echo/echo.proto.pb \
+  --go_opt=paths=source_relative \
+  --go_out=plugins=grpc:./echo/ echo/echo.proto
+```
+
+Edit `go.mod` and uncomment the local imports.  The file should look like
+
+```yaml
+module main
+
+go 1.14
+
+require (
+	github.com/google/uuid v1.1.2 // indirect
+	golang.org/x/net v0.0.0-20200822124328-c89045814202 // indirect
+	google.golang.org/grpc v1.31.1 // indirect
+	google.golang.org/protobuf v1.25.0 // indirect
+	github.com/salrashid123/go-grpc-bazel-docker/echo v0.0.0
+)
+
+replace github.com/salrashid123/go-grpc-bazel-docker/echo => ./echo
+```
+
+then,
+
+```
+go run greeter_server/main.go --grpcport :50051 --insecure  
+go run greeter_client/main.go --host localhost:50051 --insecure
 ```

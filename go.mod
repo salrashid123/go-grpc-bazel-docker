@@ -7,7 +7,7 @@ require (
 	golang.org/x/net v0.0.0-20200822124328-c89045814202 // indirect
 	google.golang.org/grpc v1.31.1 // indirect
 	google.golang.org/protobuf v1.25.0 // indirect
-	echo v0.0.0
+	// github.com/salrashid123/go-grpc-bazel-docker/echo v0.0.0
 )
 
-replace echo => ./echo
+// replace github.com/salrashid123/go-grpc-bazel-docker/echo => ./echo

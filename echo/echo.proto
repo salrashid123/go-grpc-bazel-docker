@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package echo;
-option go_package = ".;echo";
+option go_package = "github.com/salrashid123/go-grpc-bazel-docker/echo";
 
 service EchoServer {
   rpc SayHelloUnary (EchoRequest) returns (EchoReply) {}

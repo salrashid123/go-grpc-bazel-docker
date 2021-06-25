@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"echo"
+	"github.com/salrashid123/go-grpc-bazel-docker/echo"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"

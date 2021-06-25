@@ -16,7 +16,8 @@ container_image(
     base = "@alpine_linux_amd64//image",
     entrypoint = ["/client"],
     files = [":client"],
-    #repository = "gcr.io/project_id"
+    # repository = "docker.io/salrashid123"
+    # repository = "gcr.io/mineral-minutia-820"   
 )
 
 go_library(
