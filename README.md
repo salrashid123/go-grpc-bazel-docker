@@ -41,7 +41,37 @@ $ docker inspect gcr.io/your_project/greeter_server:greeter_server_image
    ...
 ```
 
-### Cloud Shell
+### With bazel docker container
+
+The easiest way here it to run bazel in docker using the provided image:
+
+```bash
+git clone https://github.com/salrashid123/go-grpc-bazel-docker.git
+cd go-grpc-bazel-docker
+
+docker run \
+  -e USER="$(id -u)" \
+  -v `pwd`:/src/workspace \
+  -v /tmp//build_output:/tmp/build_output \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -w /src/workspace \
+  gcr.io/cloud-builders/bazel@sha256:36ab6b8816e473592fa70e0dd866caf0267cacc1ed6ac40266a082f0b70270a0 \
+  --output_user_root=/tmp/build_output \
+  run  --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_server:greeter_server_image
+```
+
+Note, the bazel version used here is 
+
+```bash
+$ docker run gcr.io/cloud-builders/bazel@sha256:36ab6b8816e473592fa70e0dd866caf0267cacc1ed6ac40266a082f0b70270a0 version
+    Build label: 4.1.0
+    Build target: bazel-out/k8-opt/bin/src/main/java/com/google/devtools/build/lib/bazel/BazelServer_deploy.jar
+    Build time: Fri May 21 11:11:34 2021 (1621595494)
+    Build timestamp: 1621595494
+    Build timestamp as int: 1621595494
+```
+
+### With Cloud Shell
 
 If you have access to Google Cloud Platform account, you can use Cloud Shell to run `bazel` and save yourself an installation.
 
@@ -57,15 +87,6 @@ Then within the shell, you should be able to `bazel version` to ensure it is ins
 
 ```bash
 $ bazel version
-    Build label: 4.1.0
-    Build target: bazel-out/k8-opt/bin/src/main/java/com/google/devtools/build/lib/bazel/BazelServer_deploy.jar
-    Build time: Fri May 21 11:11:34 2021 (1621595494)
-    Build timestamp: 1621595494
-    Build timestamp as int: 1621595494
-
-# or 
-
-$ docker run gcr.io/cloud-builders/bazel@sha256:0bb18b771de34c386ae26bfac960cd57fda889eeef1f0171e10dab73e17cade3 version
     Build label: 4.1.0
     Build target: bazel-out/k8-opt/bin/src/main/java/com/google/devtools/build/lib/bazel/BazelServer_deploy.jar
     Build time: Fri May 21 11:11:34 2021 (1621595494)
