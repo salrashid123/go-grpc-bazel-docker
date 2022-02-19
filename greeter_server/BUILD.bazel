@@ -15,9 +15,10 @@ go_binary(
 
 container_image(
     name = "greeter_server_image",
-    base = "@alpine_linux_amd64//image",
+    base = "@distroless_base//image",
     entrypoint = ["/server"],
     files = [":server"],
+    ports=["50051"],
     # repository = "docker.io/salrashid123"
     # repository = "gcr.io/mineral-minutia-820"      
 )

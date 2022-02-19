@@ -13,7 +13,7 @@ go_binary(
 
 container_image(
     name = "greeter_client_image",
-    base = "@alpine_linux_amd64//image",
+    base = "@distroless_base//image",
     entrypoint = ["/client"],
     files = [":client"],
     # repository = "docker.io/salrashid123"
