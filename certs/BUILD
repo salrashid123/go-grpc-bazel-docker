@@ -1,1 +1,0 @@
-exports_files(["CA_crt.pem","grpc_server_crt.pem","grpc_server_key.pem"])

@@ -6,21 +6,18 @@ go_binary(
     name = "server",
     embed = [":go_default_library"],
     visibility = ["//visibility:public"],
-    data = [
-        "//certs:CA_crt.pem",
-        "//certs:grpc_server_crt.pem",   
-        "//certs:grpc_server_key.pem",                
-    ]      
+    goos = "linux", 
+    goarch = "amd64",    
 )
 
 container_image(
     name = "greeter_server_image",
     base = "@distroless_base//image",
     entrypoint = ["/server"],
-    files = [":server"],
+    files = [":server"],   
     ports=["50051"],
     # repository = "docker.io/salrashid123"
-    # repository = "gcr.io/mineral-minutia-820"      
+    # repository = "gcr.io/PROJECT_ID"      
 )
 
 go_library(

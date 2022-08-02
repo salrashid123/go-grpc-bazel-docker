@@ -1,12 +1,9 @@
 package main
 
 import (
-	"crypto/tls"
-	"crypto/x509"
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"sync"
 	"time"
@@ -15,16 +12,12 @@ import (
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 var (
 	address         = flag.String("host", "localhost:50051", "host:port of gRPC server")
-	insecure        = flag.Bool("insecure", false, "connect without TLS")
 	skipHealthCheck = flag.Bool("skipHealthCheck", false, "Skip Initial Healthcheck")
-	tlsCert         = flag.String("tlsCert", "", "tls Certificate")
-	serverName      = flag.String("servername", "grpc.domain.com", "CACert for server")
 )
 
 const (
@@ -37,25 +30,9 @@ func main() {
 	// Set up a connection to the server.
 	var err error
 	var conn *grpc.ClientConn
-	if *insecure == true {
-		conn, err = grpc.Dial(*address, grpc.WithInsecure())
-	} else {
 
-		var tlsCfg tls.Config
-		rootCAs := x509.NewCertPool()
-		pem, err := ioutil.ReadFile(*tlsCert)
-		if err != nil {
-			log.Fatalf("failed to load root CA certificates  error=%v", err)
-		}
-		if !rootCAs.AppendCertsFromPEM(pem) {
-			log.Fatalf("no root CA certs parsed from file ")
-		}
-		tlsCfg.RootCAs = rootCAs
-		tlsCfg.ServerName = *serverName
+	conn, err = grpc.Dial(*address, grpc.WithInsecure())
 
-		ce := credentials.NewTLS(&tlsCfg)
-		conn, err = grpc.Dial(*address, grpc.WithTransportCredentials(ce))
-	}
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}

@@ -2,3 +2,7 @@ steps:
 - name: gcr.io/cloud-builders/bazel@sha256:4a19236baf0e5d663942c3947497e3f5b5356ae3dd6f97b1fae92897a97a11ad
   args: ['run', '--platforms=@io_bazel_rules_go//go/toolchain:linux_amd64', 'greeter_server:greeter_server_image']
 images: ['gcr.io/$PROJECT_ID/greeter_server:greeter_server_image']
+
+# - name: gcr.io/cloud-builders/bazel@sha256:4a19236baf0e5d663942c3947497e3f5b5356ae3dd6f97b1fae92897a97a11ad
+#   args: ['run', '--platforms=@io_bazel_rules_go//go/toolchain:linux_amd64', 'greeter_client:greeter_client_image']
+# images: ['gcr.io/$PROJECT_ID/greeter_client:greeter_client_image']

@@ -14,7 +14,6 @@ import (
 	"google.golang.org/grpc"
 
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
@@ -22,9 +21,6 @@ import (
 
 var (
 	grpcport = flag.String("grpcport", ":50051", "grpcport")
-	tlsCert  = flag.String("tlsCert", "", "tls Certificate")
-	tlsKey   = flag.String("tlsKey", "", "tls Key")
-	insecure = flag.Bool("insecure", false, "startup without TLS")
 	hs       *health.Server
 )
 
@@ -100,16 +96,6 @@ func main() {
 	}
 
 	sopts := []grpc.ServerOption{}
-	if *insecure == false {
-		if *tlsCert == "" || *tlsKey == "" {
-			log.Fatalf("Must set --tlsCert and tlsKey if --insecure flags is not set")
-		}
-		ce, err := credentials.NewServerTLSFromFile(*tlsCert, *tlsKey)
-		if err != nil {
-			log.Fatalf("Failed to generate credentials %v", err)
-		}
-		sopts = append(sopts, grpc.Creds(ce))
-	}
 
 	s := grpc.NewServer(sopts...)
 	echo.RegisterEchoServerServer(s, &server{})

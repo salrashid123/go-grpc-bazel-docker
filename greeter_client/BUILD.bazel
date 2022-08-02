@@ -6,9 +6,8 @@ go_binary(
     name = "client",
     embed = [":go_default_library"],
     visibility = ["//visibility:public"],
-    data = [
-        "//certs:CA_crt.pem",    
-    ]       
+    goos = "linux", 
+    goarch = "amd64",     
 )
 
 container_image(
@@ -17,7 +16,7 @@ container_image(
     entrypoint = ["/client"],
     files = [":client"],
     # repository = "docker.io/salrashid123"
-    # repository = "gcr.io/mineral-minutia-820"   
+    # repository = "gcr.io/PROJECT_ID"   
 )
 
 go_library(
