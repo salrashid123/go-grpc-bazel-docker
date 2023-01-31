@@ -10,8 +10,18 @@ go_binary(
     goarch = "amd64",    
 )
 
+go_image(
+    name = "go_image",
+    embed = [":go_default_library"],
+    importpath = "main",
+    visibility = ["//visibility:private"],
+    goos = "linux",
+    goarch = "amd64",
+)
+
 container_image(
     name = "greeter_server_image",
+    # base = ":go_image",
     base = "@distroless_base//image",
     entrypoint = ["/server"],
     files = [":server"],   

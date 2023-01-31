@@ -14,7 +14,7 @@ For reference, see:
 - [Building deterministic Docker images with Bazel](https://blog.bazel.build/2015/07/28/docker_build.html)
 - [Create Container images with Bazel](https://dev.to/schoren/create-container-images-with-bazel-47am)
 - [rules_docker](https://github.com/bazelbuild/rules_docker)
-
+- [Deterministic builds with nodejs + bazel + docker](https://github.com/salrashid123/nodejs-bazel-docker)
 
 To run this sample, you will need `bazel` installed (see [Cloud Shell](#cloud-shell) for an easy way to use `bazel`)
 
