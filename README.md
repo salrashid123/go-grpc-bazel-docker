@@ -6,14 +6,19 @@ The following sample will build a golang gRPC client/server and then embed the b
 
 These images are will have a consistent image hash no matter where it is built
 
-*  `greeter_server@sha256:e53d590865d15575c9fed02170ebe8c77cae3d9ddb2ba99583ee41c059768fc1`
-*  `greeter_client@sha256:16b185fc504ba82aadf210f1c69d6b2e5114cb816c2156746280ec51508b31c9`
+*  `greeter_server@sha256:59240a9675e02b7a4c0c24f4d3346afcedd229b4c38f1e24bd2e37afc87e7aac`
+*  `greeter_client@sha256:cb1fdcd482f3a5a5523a631182befbc6aa6b9d083a7d5ea44eaae2fd6336c4d1`
 
 For reference, see:
 
 - [Building deterministic Docker images with Bazel](https://blog.bazel.build/2015/07/28/docker_build.html)
 - [Create Container images with Bazel](https://dev.to/schoren/create-container-images-with-bazel-47am)
 - [rules_docker](https://github.com/bazelbuild/rules_docker)
+- [Deterministic builds with nodejs + bazel + docker](https://github.com/salrashid123/nodejs-bazel-docker)
+- [Deterministic container hashes and container signing using Cosign, Bazel and Google Cloud Build](https://github.com/salrashid123/cosign_bazel_cloud_build)
+- [Deterministic container images with java and GCP APIs using bazel](https://github.com/salrashid123/java-bazel-docker)
+- [Deterministic container images with python and GCP APIs using bazel](https://github.com/salrashid123/python-bazel-docker)
+- [Deterministic container images with c++ and GCP APIs using bazel.](https://github.com/salrashid123/cpp-bazel-docker)
 - [Deterministic builds with nodejs + bazel + docker](https://github.com/salrashid123/nodejs-bazel-docker)
 
 To run this sample, you will need `bazel` installed (see [Cloud Shell](#cloud-shell) for an easy way to use `bazel`)
@@ -25,35 +30,6 @@ In the end, you'll end up with the same digests
 ```bash
 $ docker pull salrashid123/greeter_server:greeter_server_image
 $ docker inspect salrashid123/greeter_server:greeter_server_image
-
-[
-    {
-        "RepoTags": [
-            "bazel/greeter_server:greeter_server_image",
-            "salrashid123/greeter_server:greeter_server_image"
-        ],
-        "RepoDigests": [
-            "salrashid123/greeter_server@sha256:e53d590865d15575c9fed02170ebe8c77cae3d9ddb2ba99583ee41c059768fc1"
-        ],
-
-```
-
-* Client 
-
-```bash
-$ docker pull salrashid123/greeter_client:greeter_client_image
-$ docker inspect salrashid123/greeter_client:greeter_client_image
-
-[
-    {
-        "RepoTags": [
-            "bazel/greeter_client:greeter_client_image",
-            "salrashid123/greeter_client:greeter_client_image"
-        ],
-        "RepoDigests": [
-            "gcr.io/mineral-minutia-820/greeter_client@sha256:16b185fc504ba82aadf210f1c69d6b2e5114cb816c2156746280ec51508b31c9"
-        ],
-
 ```
 
 ### With bazel docker container
@@ -96,16 +72,6 @@ docker run \
   run  --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_client:greeter_client_image
 ```
 
-Note, the bazel version used here is 
-
-```bash
-$ docker run gcr.io/cloud-builders/bazel@sha256:4a19236baf0e5d663942c3947497e3f5b5356ae3dd6f97b1fae92897a97a11ad version
-    Build label: 5.0.0
-    Build target: bazel-out/k8-opt/bin/src/main/java/com/google/devtools/build/lib/bazel/BazelServer_deploy.jar
-    Build time: Wed Jan 19 14:08:54 2022 (1642601334)
-    Build timestamp: 1642601334
-    Build timestamp as int: 1642601334
-```
 
 ### With Cloud Shell
 
@@ -227,12 +193,21 @@ go run greeter_client/main.go \
 Specify a docker repo to by setting the `repository` command here. In the case below, its container registry `gcr.io/project_id`
 
 ```bazel
+go_image(
+    name = "go_image",
+    embed = [":go_default_library"],
+    importpath = "main",
+    visibility = ["//visibility:private"],
+    goos = "linux",
+    goarch = "amd64",
+)
+
 container_image(
     name = "greeter_server_image",
-    base = "@alpine_linux_amd64//image",
-    entrypoint = ["/server"],
-    files = [":server"],
-    repository = "gcr.io/PROJECT_ID`"
+    base = ":go_image",  
+    ports=["50051"],
+    # repository = "docker.io/salrashid123"
+    # repository = "gcr.io/PROJECT_ID"      
 )
 ```
 
@@ -243,7 +218,7 @@ on push to a repo
 $ bazel build --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_server:all
 $ bazel run  --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 greeter_server:greeter_server_image
 
-$ docker push gcr.io/PROJECT_ID/greeter_server:greeter_server_image
+$ docker push gcr.io/$PROJECT_ID/greeter_server:greeter_server_image
 
 ```
 
@@ -262,12 +237,21 @@ $ docker inspect gcr.io/PROJECT_ID/greeter_server:greeter_server_image
 You can use Cloud Build to create the image by using the `bazel` builder and specifying the repository path to export to.  In the sample below, the repository is set o google container registry:
 
 ```yaml
+go_image(
+    name = "go_image",
+    embed = [":go_default_library"],
+    importpath = "main",
+    visibility = ["//visibility:private"],
+    goos = "linux",
+    goarch = "amd64",
+)
+
 container_image(
     name = "greeter_server_image",
-    base = "@alpine_linux_amd64//image",
-    entrypoint = ["/server"],
-    files = [":server"],
-    repository = "gcr.io/PROJECT_ID"
+    base = ":go_image",  
+    ports=["50051"],
+    # repository = "docker.io/salrashid123"
+    repository = "gcr.io/PROJECT_ID"      
 )
 ```
 
@@ -276,28 +260,27 @@ Note that `cloudbuild.yaml` specifies the base bazel version by hash too
 ```yaml
 steps:
 - name: gcr.io/cloud-builders/bazel@sha256:4a19236baf0e5d663942c3947497e3f5b5356ae3dd6f97b1fae92897a97a11ad
+  id: build
   args: ['run', '--platforms=@io_bazel_rules_go//go/toolchain:linux_amd64', 'greeter_server:greeter_server_image']
-images: ['gcr.io/$PROJECT_ID/greeter_server:greeter_server_image']
+
+- name: gcr.io/cloud-builders/docker
+  id: tag
+  args: ['tag', 'us-central1-docker.pkg.dev/builder-project/repo1/greeter_server:greeter_server_image', 'us-central1-docker.pkg.dev/$PROJECT_ID/repo1/greeter_server']
+  waitFor: ['build']
+
+- name: 'gcr.io/cloud-builders/docker'
+  id: push
+  args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/repo1/greeter_server']
+  waitFor: ['tag']
+
+options:
+  machineType: 'N1_HIGHCPU_32'
 ```
 
 
 ```bash
 $ bazel clean
 $ gcloud builds submit --config=cloudbuild.yaml --machine-type=n1-highcpu-32
-
-    INFO: Elapsed time: 76.945s, Critical Path: 17.73s
-    Loaded image ID: sha256:6dac89d9fe7ae4fb25130b14fc35bae1ac939a58911242ba7d0c346290fc89f3
-    Tagging 6dac89d9fe7ae4fb25130b14fc35bae1ac939a58911242ba7d0c346290fc89f3 as gcr.io/mineral-minutia-820/greeter_server:greeter_server_image
-    PUSH
-    Pushing gcr.io/mineral-minutia-820/greeter_server:greeter_server_image
-
-    greeter_server_image: digest: sha256:e53d590865d15575c9fed02170ebe8c77cae3d9ddb2ba99583ee41c059768fc1 size: 948
-    DONE
-    --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    ID                                    CREATE_TIME                DURATION  SOURCE                                                                                             IMAGES                                                          STATUS
-    0180d5ae-314c-462f-bb5a-c4c670eb8ad8  2022-08-02T09:27:47+00:00  2M10S     gs://mineral-minutia-820_cloudbuild/source/1659432466.081614-00236c466710478d97ed731cb9fec677.tgz  gcr.io/mineral-minutia-820/greeter_server:greeter_server_image  SUCCESS
-
-
 ```
 
 

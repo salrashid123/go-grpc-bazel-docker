@@ -21,13 +21,11 @@ go_image(
 
 container_image(
     name = "greeter_server_image",
-    # base = ":go_image",
-    base = "@distroless_base//image",
-    entrypoint = ["/server"],
-    files = [":server"],   
+    base = ":go_image",  
     ports=["50051"],
     # repository = "docker.io/salrashid123"
-    # repository = "gcr.io/PROJECT_ID"      
+    # repository = "gcr.io/$PROJECT_ID" 
+    repository = "us-central1-docker.pkg.dev/builder-project/repo1/greeter_server",         
 )
 
 go_library(
