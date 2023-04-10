@@ -9,6 +9,13 @@ These images are will have a consistent image hash no matter where it is built
 *  `greeter_server@sha256:59240a9675e02b7a4c0c24f4d3346afcedd229b4c38f1e24bd2e37afc87e7aac`
 *  `greeter_client@sha256:cb1fdcd482f3a5a5523a631182befbc6aa6b9d083a7d5ea44eaae2fd6336c4d1`
 
+
+![images/server.png](images/server.png)
+
+and
+
+![images/client.png](images/client.png)
+
 For reference, see:
 
 - [Building deterministic Docker images with Bazel](https://blog.bazel.build/2015/07/28/docker_build.html)
