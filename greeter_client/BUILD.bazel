@@ -1,6 +1,8 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
-load("@io_bazel_rules_docker//go:image.bzl", "go_image")
-load("@io_bazel_rules_docker//container:container.bzl", "container_image")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_push", "oci_tarball", "oci_image_index")
+load("@bazel_gazelle//:def.bzl", "gazelle")
+
 
 go_binary(
     name = "client",
@@ -8,23 +10,6 @@ go_binary(
     visibility = ["//visibility:public"],
     goos = "linux", 
     goarch = "amd64",     
-)
-
-go_image(
-    name = "go_image",
-    embed = [":go_default_library"],
-    importpath = "main",
-    visibility = ["//visibility:private"],
-    goos = "linux",
-    goarch = "amd64",
-)
-
-container_image(
-    name = "greeter_client_image",
-    base = ":go_image",
-    # repository = "docker.io/salrashid123"
-    # repository = "gcr.io/#PROJECT_ID"
-    repository = "us-central1-docker.pkg.dev/builder-project/repo1/greeter_client",             
 )
 
 go_library(
@@ -39,4 +24,28 @@ go_library(
         "@org_golang_google_grpc//health/grpc_health_v1:go_default_library",
         "@org_golang_google_grpc//credentials:go_default_library",        
     ],
+)
+
+pkg_tar(
+    name = "client-tar",
+    srcs = [":client"],
+    package_dir = "/",
+)
+
+oci_image(
+    name = "greeter_client_image",
+    base = "@distroless_base",
+    tars = [":client-tar"], 
+    entrypoint = ["/client"],     
+    cmd = [],
+    env = {},
+)
+
+oci_push(
+    name = "push-image",
+    image = ":greeter_client_image",
+    repository = "localhost:4000/greeter_client",
+    #repository = "docker.io/salrashid123/greeter_client",    
+    #repository = "us-central1-docker.pkg.dev/PROJECT_ID/repo1/greeter_client",
+    remote_tags = ["client"]
 )

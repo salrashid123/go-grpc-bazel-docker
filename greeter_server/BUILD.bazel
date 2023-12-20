@@ -1,6 +1,8 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
-load("@io_bazel_rules_docker//go:image.bzl", "go_image")
-load("@io_bazel_rules_docker//container:container.bzl", "container_image")
+
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_push", "oci_tarball", "oci_image_index")
+load("@bazel_gazelle//:def.bzl", "gazelle")
 
 go_binary(
     name = "server",
@@ -8,24 +10,6 @@ go_binary(
     visibility = ["//visibility:public"],
     goos = "linux", 
     goarch = "amd64",    
-)
-
-go_image(
-    name = "go_image",
-    embed = [":go_default_library"],
-    importpath = "main",
-    visibility = ["//visibility:private"],
-    goos = "linux",
-    goarch = "amd64",
-)
-
-container_image(
-    name = "greeter_server_image",
-    base = ":go_image",  
-    ports=["50051"],
-    # repository = "docker.io/salrashid123"
-    # repository = "gcr.io/$PROJECT_ID" 
-    repository = "us-central1-docker.pkg.dev/builder-project/repo1/greeter_server",         
 )
 
 go_library(
@@ -45,3 +29,51 @@ go_library(
         "@org_golang_x_net//context:go_default_library",      
     ],
 )
+
+pkg_tar(
+    name = "app-tar",
+    srcs = [":server"],
+    package_dir = "/",
+)
+
+oci_image(
+    name = "greeter_server_image",
+    base = "@distroless_base",
+    tars = [":app-tar"],  
+    entrypoint = ["/server"],
+    cmd = [],
+    env = {},
+    exposed_ports = [
+        "50051/tcp",
+    ],    
+)
+
+oci_push(
+    name = "push-image",
+    image = ":greeter_server_image",
+    #repository = "docker.io/salrashid123/greeter_server",
+    repository = "localhost:4000/greeter_server",
+    #repository = "us-central1-docker.pkg.dev/srashid-test2/repo1/greeter_server",
+    remote_tags = ["server"]
+)
+
+#oci_tarball(
+#    name = "tar-docker",
+#    image = "greeter_server_image",
+#    format = "docker",
+#    repo_tags = ["localhost:4000/greeter_server"],
+#)
+
+#oci_image_index(
+#    name = "app-index",
+#    images = [
+#        ":greeter_server_image",
+#    ]
+#)
+
+#oci_tarball(
+#    name = "tar-oci-index",
+#    image = ":app-index",
+#    format = "oci",
+#    repo_tags = ["localhost:4000/greeter_server"],
+#)
