@@ -13,7 +13,7 @@ For reference, see:
 
 - [Building deterministic Docker images with Bazel](https://blog.bazel.build/2015/07/28/docker_build.html)
 - [Create Container images with Bazel](https://dev.to/schoren/create-container-images-with-bazel-47am)
-- [rules_docker](https://github.com/bazelbuild/rules_docker)
+- [rules_oci](https://github.com/bazel-contrib/rules_oci)
 - [Deterministic builds with nodejs + bazel + docker](https://github.com/salrashid123/nodejs-bazel-docker)
 - [Deterministic container hashes and container signing using Cosign, Bazel and Google Cloud Build](https://github.com/salrashid123/cosign_bazel_cloud_build)
 - [Deterministic container images with java and GCP APIs using bazel](https://github.com/salrashid123/java-bazel-docker)
