@@ -9,12 +9,6 @@ These images are will have a consistent image hash no matter where it is built
 *  `greeter_server@sha256:2bd28b0dadb814a0fb8f763b48be928767ff4fc847435b96f43397ae449b9d2f`
 *  `greeter_client@sha256:e50b329034d8f43a2d40887c6461c4271f7cc35f7ab5ed583dfc60af16982b56`
 
-![images/server.png](images/server.png)
-
-and
-
-![images/client.png](images/client.png)
-
 For reference, see:
 
 - [Building deterministic Docker images with Bazel](https://blog.bazel.build/2015/07/28/docker_build.html)
@@ -40,7 +34,7 @@ $ docker inspect salrashid123/greeter_server:greeter_server_image
 
 ### With bazel docker container
 
-The easiest way here it to run bazel in docker using the provided image.  I fou
+The easiest way here it to run bazel in docker using the provided image. 
 
 [i know,its weird but the only thing we're using docker here for is for bazel...the build still happens deterministically]
 
