@@ -6,8 +6,8 @@ The following sample will build a golang gRPC client/server and then embed the b
 
 These images are will have a consistent image hash no matter where it is built
 
-*  `greeter_server@sha256:2bd28b0dadb814a0fb8f763b48be928767ff4fc847435b96f43397ae449b9d2f`
-*  `greeter_client@sha256:e50b329034d8f43a2d40887c6461c4271f7cc35f7ab5ed583dfc60af16982b56`
+*  `greeter_server@sha256:0ba0be62be989392dd48b7ce2efc38f9bf213c5d97a5a2a337993e477acc57bf`
+*  `greeter_client@sha256:c4e98b83bf46863e5ad5d911449de5c66e27a26d245f0e46b3a9dc959672cf20`
 
 For reference, see:
 
@@ -41,7 +41,8 @@ The easiest way here it to run bazel in docker using the provided image.
 First start a local registry where we can push the test images.  I'm using [crane](https://github.com/google/go-containerregistry/tree/main/cmd/crane)
 
 ```bash
-crane registry serve --address :4000
+go install github.com/google/go-containerregistry/cmd/crane@latest
+$HOME/go/bin/crane registry serve --address :4000
 ```
 
 then
@@ -50,7 +51,17 @@ then
 git clone https://github.com/salrashid123/go-grpc-bazel-docker.git
 cd go-grpc-bazel-docker
 
-# server
+# to update the repo
+# $ bazel version
+#     Build label: 7.3.2
+#     Build target: @@//src/main/java/com/google/devtools/build/lib/bazel:BazelServer
+#     Build time: Tue Oct 1 17:46:05 2024 (1727804765)
+#     Build timestamp: 1727804765
+#     Build timestamp as int: 1727804765
+# bazel run :gazelle -- update-repos -from_file=go.mod -prune=true -to_macro=repositories.bzl%go_repositories
+# bazel run greeter_server:push-image
+
+# server built with bazel 7.3.2
 docker run --net=host \
   -e USER="$(id -u)" \
   -v `pwd`:/src/workspace \
@@ -58,19 +69,20 @@ docker run --net=host \
   -v /tmp/build_output:/tmp/build_output \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -w /src/workspace \
-  gcr.io/cloud-builders/bazel@sha256:7c34604572d4f001928b98f2b04e2feaebce67b7933e4182b817dcbfe9904bcd \
+  gcr.io/cloud-builders/bazel@sha256:a18848856e9c1203e4d6dff07ec1a407355380eb3c47eb368edd1f4243b616e2 \
   --output_user_root=/tmp/build_output \
   run greeter_server:push-image
 
 # client
+# bazel run greeter_client:push-image
 docker run --net=host  \
   -e USER="$(id -u)" \
   -v `pwd`:/src/workspace \
-  -v $HOME/.docker/config.json:/root/.docker/config.json \  
+  -v $HOME/.docker/config.json:/root/.docker/config.json \
   -v /tmp/build_output:/tmp/build_output \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -w /src/workspace \
-  gcr.io/cloud-builders/bazel@sha256:7c34604572d4f001928b98f2b04e2feaebce67b7933e4182b817dcbfe9904bcd \
+  gcr.io/cloud-builders/bazel@sha256:a18848856e9c1203e4d6dff07ec1a407355380eb3c47eb368edd1f4243b616e2 \
   --output_user_root=/tmp/build_output \
   run greeter_client:push-image
 ```
@@ -81,11 +93,11 @@ docker run --net=host  \
 The output of the commands above will yield 
 
 ```bash
-docker pull localhost:4000/greeter_server@sha256:2bd28b0dadb814a0fb8f763b48be928767ff4fc847435b96f43397ae449b9d2f
-docker pull localhost:4000/greeter_client@sha256:e50b329034d8f43a2d40887c6461c4271f7cc35f7ab5ed583dfc60af16982b56
+docker pull localhost:4000/greeter_server@sha256:0ba0be62be989392dd48b7ce2efc38f9bf213c5d97a5a2a337993e477acc57bf
+docker pull localhost:4000/greeter_client@sha256:c4e98b83bf46863e5ad5d911449de5c66e27a26d245f0e46b3a9dc959672cf20
 
-#docker pull salrashid123/greeter_server@sha256:2bd28b0dadb814a0fb8f763b48be928767ff4fc847435b96f43397ae449b9d2f
-#docker pull salrashid123/greeter_client@sha256:e50b329034d8f43a2d40887c6461c4271f7cc35f7ab5ed583dfc60af16982b56
+#docker pull salrashid123/greeter_server@sha256:0ba0be62be989392dd48b7ce2efc38f9bf213c5d97a5a2a337993e477acc57bf
+#docker pull salrashid123/greeter_client@sha256:c4e98b83bf46863e5ad5d911449de5c66e27a26d245f0e46b3a9dc959672cf20
 ```
 
 Inspect the image thats generated.  The hash we're after is actually `RepoTags` which we'll generate and show later, for now
@@ -97,8 +109,8 @@ Inspect the image thats generated.  The hash we're after is actually `RepoTags` 
 - with docker
 
 ```bash
-docker run -p 50051:50051 localhost:4000/greeter_server@sha256:2bd28b0dadb814a0fb8f763b48be928767ff4fc847435b96f43397ae449b9d2f --grpcport :50051
-docker run --network="host" localhost:4000/greeter_client@sha256:e50b329034d8f43a2d40887c6461c4271f7cc35f7ab5ed583dfc60af16982b56 --host localhost:50051 -skipHealthCheck 
+docker run -p 50051:50051 localhost:4000/greeter_server@sha256:0ba0be62be989392dd48b7ce2efc38f9bf213c5d97a5a2a337993e477acc57bf --grpcport :50051
+docker run --network="host" localhost:4000/greeter_client@sha256:c4e98b83bf46863e5ad5d911449de5c66e27a26d245f0e46b3a9dc959672cf20 --host localhost:50051 -skipHealthCheck 
 ```
 
 ### Specify docker image
@@ -194,8 +206,7 @@ Enable the rule that uses `echo.pb.go` and disable the rest:
 
 # go_proto_library(
 #     name = "echo_go_proto",
-#     compiler = "@io_bazel_rules_go//proto:go_grpc",
-#     compilers = ["@io_bazel_rules_go//proto:go_grpc"],
+#     compiler = "@rules_go//proto:go_grpc",
 #     importpath = "github.com/salrashid123/go-grpc-bazel-docker/echo",
 #     proto = ":echo_proto",
 #     visibility = ["//visibility:public"],
