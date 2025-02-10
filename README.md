@@ -6,8 +6,8 @@ The following sample will build a golang gRPC client/server and then embed the b
 
 These images are will have a consistent image hash no matter where it is built
 
-*  `greeter_server@sha256:0ba0be62be989392dd48b7ce2efc38f9bf213c5d97a5a2a337993e477acc57bf`
-*  `greeter_client@sha256:c4e98b83bf46863e5ad5d911449de5c66e27a26d245f0e46b3a9dc959672cf20`
+*  `greeter_server@sha256:967daccf85fb1979957e502871e8620d443ee7de5272006e2f504ee26b51f561`
+*  `greeter_client@sha256:ff1d97fae3f329a0f0b7f054826285acf2f3e5b15f024b0cdde74b11a52f3d1e`
 
 For reference, see:
 
@@ -42,6 +42,7 @@ First start a local registry where we can push the test images.  I'm using [cran
 
 ```bash
 go install github.com/google/go-containerregistry/cmd/crane@latest
+
 $HOME/go/bin/crane registry serve --address :4000
 ```
 
@@ -53,64 +54,45 @@ cd go-grpc-bazel-docker
 
 # to update the repo
 # $ bazel version
-#     Build label: 7.3.2
-#     Build target: @@//src/main/java/com/google/devtools/build/lib/bazel:BazelServer
-#     Build time: Tue Oct 1 17:46:05 2024 (1727804765)
-#     Build timestamp: 1727804765
-#     Build timestamp as int: 1727804765
+    # Build label: 8.0.1
+    # Build target: @@//src/main/java/com/google/devtools/build/lib/bazel:BazelServer
+    # Build time: Fri Jan 17 19:16:16 2025 (1737141376)
+    # Build timestamp: 1737141376
+    # Build timestamp as int: 1737141376
 # bazel run :gazelle -- update-repos -from_file=go.mod -prune=true -to_macro=repositories.bzl%go_repositories
+## bazel query 'kind(platform,@rules_go//go/toolchain:all)'
+# bazel build --platforms=@rules_go//go/toolchain:linux_amd64 greeter_server:server
+# bazel build --platforms=@rules_go//go/toolchain:linux_arm64 greeter_server:server
 # bazel run greeter_server:push-image
 
-# server built with bazel 7.3.2
+# server built with bazel 8.0.1
+mkdir /tmp/build_output
 docker run --net=host \
   -e USER="$(id -u)" \
+  -u="$(id -u)"  \
   -v `pwd`:/src/workspace \
   -v $HOME/.docker/config.json:/root/.docker/config.json \
   -v /tmp/build_output:/tmp/build_output \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -w /src/workspace \
-  gcr.io/cloud-builders/bazel@sha256:a18848856e9c1203e4d6dff07ec1a407355380eb3c47eb368edd1f4243b616e2 \
+  gcr.io/bazel-public/bazel@sha256:352859df4bd128049db770ac4202b79ab425c6fbc41db88eeb79df08a1d1de6f \
   --output_user_root=/tmp/build_output \
   run greeter_server:push-image
 
 # client
 # bazel run greeter_client:push-image
-docker run --net=host  \
+docker run --net=host \
   -e USER="$(id -u)" \
+  -u="$(id -u)"  \
   -v `pwd`:/src/workspace \
   -v $HOME/.docker/config.json:/root/.docker/config.json \
   -v /tmp/build_output:/tmp/build_output \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -w /src/workspace \
-  gcr.io/cloud-builders/bazel@sha256:a18848856e9c1203e4d6dff07ec1a407355380eb3c47eb368edd1f4243b616e2 \
+  gcr.io/bazel-public/bazel@sha256:352859df4bd128049db770ac4202b79ab425c6fbc41db88eeb79df08a1d1de6f \
   --output_user_root=/tmp/build_output \
   run greeter_client:push-image
-```
 
-
-### Check Image
-
-The output of the commands above will yield 
-
-```bash
-docker pull localhost:4000/greeter_server@sha256:0ba0be62be989392dd48b7ce2efc38f9bf213c5d97a5a2a337993e477acc57bf
-docker pull localhost:4000/greeter_client@sha256:c4e98b83bf46863e5ad5d911449de5c66e27a26d245f0e46b3a9dc959672cf20
-
-#docker pull salrashid123/greeter_server@sha256:0ba0be62be989392dd48b7ce2efc38f9bf213c5d97a5a2a337993e477acc57bf
-#docker pull salrashid123/greeter_client@sha256:c4e98b83bf46863e5ad5d911449de5c66e27a26d245f0e46b3a9dc959672cf20
-```
-
-Inspect the image thats generated.  The hash we're after is actually `RepoTags` which we'll generate and show later, for now
-
-### (optional) Run the gRPC Client/Server
-
-(why not, you already built it)
-
-- with docker
-
-```bash
-docker run -p 50051:50051 localhost:4000/greeter_server@sha256:0ba0be62be989392dd48b7ce2efc38f9bf213c5d97a5a2a337993e477acc57bf --grpcport :50051
-docker run --network="host" localhost:4000/greeter_client@sha256:c4e98b83bf46863e5ad5d911449de5c66e27a26d245f0e46b3a9dc959672cf20 --host localhost:50051 -skipHealthCheck 
 ```
 
 ### Specify docker image
@@ -138,24 +120,6 @@ oci_push(
 )
 ```
 
-### Cloud Build
-
-You can use Cloud Build to create the image by using the `bazel` builder and specifying the repository path to export to.  In the sample below, the repository is set to google container registry:
-
-```yaml
-oci_push(
-    name = "push-image",
-    image = ":greeter_server_image",
-    #repository = "localhost:4000/greeter_server",
-    repository = "us-central1-docker.pkg.dev/$PROJECT_ID/repo1/greeter_server"
-    remote_tags = ["server"]
-)
-```
-
-```bash
-$ bazel clean
-$ gcloud builds submit --config=cloudbuild.yaml --machine-type=n1-highcpu-32
-```
 ### Using Pregenerated protopb and gazelle
 
 The default bazel configuration in `echo/BUILD.bazel` compiles the proto files.  If you would rather use pregenerated proto files (eg, to [avoid conflicts](https://github.com/bazelbuild/rules_go/blob/master/proto/core.rst#avoiding-conflicts), you must do that outside of bazel and just specify a library)
@@ -195,32 +159,20 @@ require (
 
 `C)`: Edit `echo/BUILD.bazel`
 
-Enable the rule that uses `echo.pb.go` and disable the rest:
+Enable the rule that uses `echo.pb.go` and disable the rest, set `embed = [":echo_go_proto_gen"]`
 
 ```bazel
-# proto_library(
-#     name = "echo_proto",
-#     srcs = ["echo.proto"],
-#     visibility = ["//visibility:public"],
-# )
-
-# go_proto_library(
-#     name = "echo_go_proto",
-#     compiler = "@rules_go//proto:go_grpc",
-#     importpath = "github.com/salrashid123/go-grpc-bazel-docker/echo",
-#     proto = ":echo_proto",
-#     visibility = ["//visibility:public"],
-# )
-
-# go_library(
-#     name = "go_default_library",
-#     embed = [":echo_go_proto"],
-#     importpath = "echo",
-#     visibility = ["//visibility:public"],
-# )
-
 go_library(
-    name = "echo_go_proto",
+    name = "go_default_library",
+    #embed = [":echo_go_proto"],
+    embed = [":echo_go_proto_gen"],
+    importpath = "echo",
+    visibility = ["//visibility:public"],
+)
+
+# For pregenerated echo.pb.go
+go_library(
+    name = "echo_go_proto_gen",
     srcs = [
         "echo.pb.go",
     ],
@@ -233,7 +185,7 @@ go_library(
         "@org_golang_google_grpc//:go_default_library",
         "@org_golang_google_grpc//codes:go_default_library",
         "@org_golang_google_grpc//status:go_default_library",
-        "@org_golang_google_grpc//credentials:go_default_library",                          
+        "@org_golang_google_grpc//credentials:go_default_library",                         
         "@org_golang_x_net//context:go_default_library",         
     ],
 )
@@ -243,4 +195,134 @@ go_library(
 
 ```
 bazel run :gazelle -- update-repos -from_file=go.mod -prune=true -to_macro=repositories.bzl%go_repositories
+```
+
+### MultiArch OCI Image
+
+The default image built in this repo is of type `format = "oci"` but is not an index pointing to multi-architecture binaries
+
+```bash
+$ bazel run greeter_server:push-image
+
+$ crane manifest salrashid123/greeter_server:server | jq '.'
+{
+  "schemaVersion": 2,
+  "mediaType": "application/vnd.oci.image.manifest.v1+json",
+  "config": {
+    "mediaType": "application/vnd.oci.image.config.v1+json",
+    "size": 1871,
+    "digest": "sha256:38423e1a284d0aabd8df711d8578ab132ac639b0dab3f0c2111c943ab8541b98"
+  },
+  "layers": []
+}
+```
+
+If instead you want to create a OCI image which contains multi-platform/architecture variants, use the `:push-cross-image` targets
+
+For example
+
+```bash
+$ bazel run greeter_server:push-image-cross
+
+## which gives the oci image manifest with references to two os/architectures:
+
+$ crane manifest salrashid123/greeter_server:server-cross | jq '.'
+
+{
+  "schemaVersion": 2,
+  "mediaType": "application/vnd.oci.image.index.v1+json",
+  "manifests": [
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "size": 2425,
+      "digest": "sha256:55cc2db3de0bdafd82e8d019fd87bb918b900a34506f832d6e5f4abdc91d01a7",
+      "platform": {
+        "os": "linux",
+        "architecture": "amd64"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "size": 2425,
+      "digest": "sha256:5356edb27d8350cb7e8254873a1249bd4103a67252b577f377206cfdc75fc0e0",
+      "platform": {
+        "os": "linux",
+        "architecture": "arm64",
+        "variant": "v8"
+      }
+    }
+  ]
+}
+
+## which you can pull if on one of the target
+$ docker inspect salrashid123/greeter_server:server-cross
+
+$ crane digest salrashid123/greeter_server:server-cross
+   sha256:73677efa8facab449df03b5439923a80e08f55da09ad6a4ab2f442bcb1f84cd9
+```
+
+![images/server-cross.png](images/server-cross.png)
+
+Compare that with the single cpu/os target image
+
+```bash
+$ bazel run greeter_server:push-image
+
+$ crane manifest salrashid123/greeter_server:server | jq '.'
+{
+  "schemaVersion": 2,
+  "mediaType": "application/vnd.oci.image.manifest.v1+json",
+  "config": {
+    "mediaType": "application/vnd.oci.image.config.v1+json",
+    "size": 1871,
+    "digest": "sha256:ecf986c3337c86c2f65d788e63e174cea1145ce3289527f16b57f0f401ff3827"
+  },
+  "layers": []
+}
+
+$ docker inspect salrashid123/greeter_server:server
+
+$ crane digest salrashid123/greeter_server:server
+   sha256:967daccf85fb1979957e502871e8620d443ee7de5272006e2f504ee26b51f561
+```
+
+![images/server.png](images/server.png)
+
+The result of this shows how the images will automatically run on AMD or ARM if the `server-cross` image is used
+
+on AMD
+
+```
+$ uname -a
+Linux instance-1 5.10.0-32-cloud-amd64 #1 SMP Debian 5.10.223-1 (2024-08-10) x86_64 GNU/Linux
+
+$ docker run salrashid123/greeter_server:server
+2025/02/09 12:08:16 Starting server...
+
+$ docker run salrashid123/greeter_server:server-cross
+2025/02/09 12:08:20 Starting server...
+```
+
+on ARM
+
+```
+$ uname -a
+Linux instance-1-arm 6.1.0-29-cloud-arm64 #1 SMP Debian 6.1.123-1 (2025-01-02) aarch64 GNU/Linux
+
+$ docker run salrashid123/greeter_server:server
+WARNING: The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8) and no specific platform was requested
+exec /server: exec format error
+
+$ docker run salrashid123/greeter_server:server-cross
+2025/02/09 12:05:56 Starting server...
+```
+
+Finally, if you wanted to generate the plain oci image tarball, run
+
+```bash
+$ bazel build greeter_server:tar-oci-index
+
+$skopeo copy --dest-tls-verify=false \
+   --all -f oci --preserve-digests oci-archive:bazel-bin/greeter_server/tar-oci-index/tarball.tar \
+     docker://localhost:4000/greeter_server:server-cross
 ```

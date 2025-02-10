@@ -1,15 +1,16 @@
-load("@rules_go//go:def.bzl", "go_binary", "go_library")
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_cross_binary")
 
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_push", "oci_tarball", "oci_image_index")
 load("@gazelle//:def.bzl", "gazelle")
+load("//:transition.bzl", "multi_arch")
 
 go_binary(
     name = "server",
     embed = [":go_default_library"],
     visibility = ["//visibility:public"],
-    goos = "linux", 
-    goarch = "amd64",    
+    #goos = "linux",
+    #goarch = "amd64",
 )
 
 go_library(
@@ -57,23 +58,43 @@ oci_push(
     remote_tags = ["server"]
 )
 
-#oci_tarball(
-#    name = "tar-docker",
-#    image = "greeter_server_image",
-#    format = "docker",
-#    repo_tags = ["localhost:4000/greeter_server"],
-#)
+multi_arch(
+    name = "images-linux-amd64",
+    image = ":greeter_server_image",
+    platforms = [
+        "//:linux_amd64",       
+    ],
+)
 
-#oci_image_index(
-#    name = "app-index",
-#    images = [
-#        ":greeter_server_image",
-#    ]
-#)
+multi_arch(
+    name = "images-linux-arm64",
+    image = ":greeter_server_image",
+    platforms = [
+        "//:linux_arm64",
+    ],
+)
 
-#oci_tarball(
-#    name = "tar-oci-index",
-#    image = ":app-index",
-#    format = "oci",
-#    repo_tags = ["localhost:4000/greeter_server"],
-#)
+oci_image_index(
+    name = "index",
+    images = [
+        ":images-linux-amd64",
+        ":images-linux-arm64",      
+    ],
+)
+
+oci_tarball(
+    name = "tar-oci-index",
+    image = ":index",
+    format = "oci",
+    repo_tags = ["localhost:4000/greeter_server"],
+)
+
+
+oci_push(
+    name = "push-image-cross",
+    image = ":index",
+    #repository = "docker.io/salrashid123/greeter_server",
+    repository = "localhost:4000/greeter_server",
+    #repository = "us-central1-docker.pkg.dev/srashid-test2/repo1/greeter_server",
+    remote_tags = ["server-cross"]
+)
